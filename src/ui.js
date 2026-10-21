@@ -205,7 +205,7 @@ export function renderTreasury(world) {
   const posRows = positions.length
     ? positions.map(([mint, p]) => `<tr><td><b>${esc(p.symbol)}</b><br><span class="dim">${short(mint)}</span></td><td>${sol(p.valueSol)}</td><td class="${p.pnlSol >= 0 ? "up" : "down"}">${signed(p.pnlSol)}</td></tr>`).join("")
     : `<tr><td colspan="3" class="empty">No open positions. The desk is holding cash.</td></tr>`;
-  const trades = (t.trades || []).slice(0, 12).map((tr) => `<div class="trade ${tr.side}"><span class="side">${tr.side === "buy" ? "BUY" : "SELL"}</span><span class="sym">${esc(tr.symbol)}</span><span class="amt">${tr.sol} SOL</span><span class="who">${byId[tr.by]?.name || ""}</span><div class="why">${esc(tr.reason)}${tr.sig ? ` · <a href="https://solscan.io/tx/${tr.sig}" target="_blank" rel="noopener">tx</a>` : ""}</div></div>`).join("") || `<p class="empty">No trades yet. The desk meets every 15 minutes.</p>`;
+  const trades = (t.trades || []).slice(0, 12).map((tr) => `<div class="trade ${tr.side}"><span class="side">${tr.side === "buy" ? "BUY" : "SELL"}</span><span class="sym">${esc(tr.symbol)}</span><span class="amt">${tr.sol} SOL</span><span class="who">${byId[tr.by]?.name || ""}</span><div class="why">${esc(tr.reason)}${tr.sig ? ` · <a href="https://solscan.io/tx/${tr.sig}" target="_blank" rel="noopener">tx</a>` : ""}</div></div>`).join("") || `<p class="empty">No trades yet. The desk meets every 5 minutes.</p>`;
   const wall = (d.wall || []).slice(0, 12).map((w) => `<li><span>${short(w.from)}</span><b>${w.sol} SOL</b></li>`).join("") || `<li class="empty">Be the first name on the wall.</li>`;
   const gallery = (perks.gallery || []).slice(0, 8).map((g) => `<a class="art" href="${esc(g.url)}" target="_blank" rel="noopener" title="${esc(g.request)}"><img src="${esc(g.url)}" alt="" loading="lazy"></a>`).join("");
   const nextDesk = t.nextDeskAt ? Math.max(0, Math.round((t.nextDeskAt - (net.world?.serverNow || Date.now())) / 60000)) : null;
@@ -242,7 +242,7 @@ export function renderTreasury(world) {
       </form>
     </div>
     <div class="card"><h4>Desk rules</h4><ul class="rules">
-      <li>Max 10% of equity per buy, max 3 buys a day, max 4 open positions</li>
+      <li>Max 10% of equity per buy, max 12 buys a day, max 6 open positions</li>
       <li>Trading halts for the day after a 20% drawdown</li>
       <li>Small caps only: market cap between $100k and $1M</li>
       <li>Only tokens with real liquidity, at least a day old, mint &amp; freeze revoked</li>
