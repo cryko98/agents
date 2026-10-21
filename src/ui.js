@@ -256,10 +256,11 @@ export function renderTreasury(world) {
       </form>
     </div>
     <div class="card"><h4>Desk rules</h4><ul class="rules">
-      <li>Max 10% of equity per buy, max 12 buys a day, max 6 open positions</li>
+      <li>Max 12% of equity per buy, max 20 buys a day, max 10 open positions</li>
       <li>Trading halts for the day after a 20% drawdown</li>
-      <li>Small caps only: market cap between $100k and $1M</li>
-      <li>Only tokens with real liquidity, at least a day old, mint &amp; freeze revoked</li>
+      <li>Small caps: $15k–$1M market cap, extra safety checks below $100k</li>
+      <li>Automatic stop-loss at −30%, take half off at +60%</li>
+      <li>Only tokens with real liquidity, at least 3h old, mint &amp; freeze revoked</li>
       <li>The crew never sells its own coin; it earns creator fees only</li>
       <li>The crew coin launches on pump.fun automatically once the plan is ready</li>
     </ul></div>
