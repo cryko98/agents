@@ -36,6 +36,12 @@ export default async function handler(req, res) {
         pushTranscript(world, { kind: "system", text: "The coin plan was wiped by the owner. Back to the whiteboard." });
         break;
       }
+      case "clean": {
+        // drop error chatter from the transcript and let research retry right away
+        world.transcript = world.transcript.filter((e) => !(e.kind === "system" && /Claude call failed|Research failed|Desk order rejected|Logo failed/.test(e.text)));
+        if (world.research?.failedAt) world.research = null;
+        break;
+      }
       case "halt":
         world.treasury.halted = { day: "manual", reason: String(body.reason || "Trading paused by the owner.") };
         pushTranscript(world, { kind: "system", text: `🛑 ${world.treasury.halted.reason}` });
