@@ -38,7 +38,9 @@ coin every `LAUNCH_COOLDOWN_MIN` minutes (default 5). Each launch opens with a `
 after that the crew earns pump.fun creator fees only. The pump.fun website link is the source post
 or article.
 
-**News radar** (`lib/signals.js`). Every minute it polls AI / tech / crypto news feeds and Trump's
+**News radar** (`lib/signals.js`). Every minute it polls world headlines, animal / zoo stories, viral
+news, AI / tech / crypto feeds (Google News, Bing News, BBC, Guardian, NYT, Sky, ABC, NPR, Live Science
+and more; images from the feeds or the article og:image) and Trump's
 Truth Social posts (public mirror). With `X_BEARER_TOKEN` (X API) it also reads the accounts in
 `X_WATCH` (default: elonmusk, realDonaldTrump, cobie and more) in near real time; without it a
 web-search sweep looks for their posts every `SIGNAL_WEBSEARCH_MIN` minutes (default 20). A fast
