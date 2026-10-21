@@ -1,5 +1,5 @@
 // POST /api/admin - owner actions, protected by ADMIN_TOKEN (header x-admin-token).
-// actions: approve-launch, reject-launch, halt, resume, reset-world, tick
+// actions: approve-launch, reject-launch, halt, resume, reset-plan, reset-world, tick
 import { json, readBody } from "../lib/http.js";
 import { getJSON, setJSON, acquireLock, releaseLock, db } from "../lib/db.js";
 import { WORLD_KEY, LOCK_KEY, TIPS_KEY, pushTranscript } from "../lib/state.js";
@@ -28,6 +28,14 @@ export default async function handler(req, res) {
         world.launch = { status: "none", rejectedAt: Date.now() };
         pushTranscript(world, { kind: "system", text: "The owner sent the launch back to the drawing board." });
         break;
+      case "reset-plan": {
+        const { emptyPlan } = await import("../shared/roster.js");
+        world.plan = emptyPlan();
+        world.launch = { status: "none" };
+        world.research = null;
+        pushTranscript(world, { kind: "system", text: "The coin plan was wiped by the owner. Back to the whiteboard." });
+        break;
+      }
       case "halt":
         world.treasury.halted = { day: "manual", reason: String(body.reason || "Trading paused by the owner.") };
         pushTranscript(world, { kind: "system", text: `🛑 ${world.treasury.halted.reason}` });
