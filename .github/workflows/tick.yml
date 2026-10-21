@@ -1,6 +1,6 @@
-# Keeps the crew working when nobody is watching: pokes /api/tick every 5 minutes.
-# No secret needed - the endpoint only advances the world when it is stale, and a
-# Redis lock keeps concurrent ticks from colliding. GitHub schedules can lag a few minutes.
+# Keeps the crew working when nobody is watching. Every 5 minutes: one full tick, then the
+# scalper every 30 seconds for the rest of the window (it needs fast price checks for its exits).
+# The endpoints skip work that is not due, and a Redis lock prevents overlapping runs.
 name: tick
 
 on:
@@ -8,13 +8,23 @@ on:
     - cron: "*/5 * * * *"
   workflow_dispatch:
 
+concurrency:
+  group: tick
+  cancel-in-progress: false
+
 jobs:
   tick:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 7
+    env:
+      SITE: https://agent-house-pied.vercel.app
+      TICK_SECRET: ${{ secrets.TICK_SECRET }}
     steps:
-      - name: Advance the world
+      - name: Full tick
+        run: curl -sS -m 150 -X POST "$SITE/api/tick${TICK_SECRET:+?secret=$TICK_SECRET}" | head -c 400; echo
+      - name: Scalper loop (about 4.5 minutes)
         run: |
-          curl -sS -m 150 -X POST "https://agent-house-pied.vercel.app/api/tick${TICK_SECRET:+?secret=$TICK_SECRET}" | head -c 600
-        env:
-          TICK_SECRET: ${{ secrets.TICK_SECRET }}
+          for i in $(seq 1 9); do
+            curl -sS -m 60 -X POST "$SITE/api/scalp" | head -c 300; echo
+            sleep 30
+          done

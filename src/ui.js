@@ -226,9 +226,9 @@ export function renderTreasury(world) {
   const t = world.treasury, d = world.donations, perks = world.perks;
   const positions = Object.entries(t.positions || {});
   const posRows = positions.length
-    ? positions.map(([mint, p]) => `<tr><td><b>${esc(p.symbol)}</b><br><span class="dim">${short(mint)}</span></td><td>${sol(p.valueSol)}</td><td class="${p.pnlSol >= 0 ? "up" : "down"}">${signed(p.pnlSol)}</td></tr>`).join("")
+    ? positions.map(([mint, p]) => `<tr><td><b>${p.strategy === "scalp" ? "⚡ " : ""}${esc(p.symbol)}</b><br><span class="dim">${short(mint)}${p.strategy === "scalp" ? " · scalp" : ""}</span></td><td>${sol(p.valueSol)}</td><td class="${p.pnlSol >= 0 ? "up" : "down"}">${signed(p.pnlSol)}${p.costSol ? `<br><span class="dim">${signed(((p.valueSol - p.costSol) / p.costSol) * 100, 1)}%</span>` : ""}</td></tr>`).join("")
     : `<tr><td colspan="3" class="empty">No open positions. The desk is holding cash.</td></tr>`;
-  const trades = (t.trades || []).slice(0, 12).map((tr) => `<div class="trade ${tr.side}"><span class="side">${tr.side === "buy" ? "BUY" : "SELL"}</span><span class="sym">${esc(tr.symbol)}</span><span class="amt">${tr.sol} SOL</span><span class="who">${byId[tr.by]?.name || ""}</span><div class="why">${esc(tr.reason)}${tr.sig ? ` · <a href="https://solscan.io/tx/${tr.sig}" target="_blank" rel="noopener">tx</a>` : ""}</div></div>`).join("") || `<p class="empty">No trades yet. The desk meets every 5 minutes.</p>`;
+  const trades = (t.trades || []).slice(0, 12).map((tr) => `<div class="trade ${tr.side}"><span class="side">${tr.side === "buy" ? "BUY" : "SELL"}</span><span class="sym">${/^Scalp/.test(tr.reason || "") ? "⚡ " : ""}${esc(tr.symbol)}${tr.realized != null ? ` <span class="${tr.realized >= 0 ? "up" : "down"}">${signed(tr.realized, 4)}</span>` : ""}</span><span class="amt">${tr.sol} SOL</span><span class="who">${byId[tr.by]?.name || ""}</span><div class="why">${esc(tr.reason)}${tr.sig ? ` · <a href="https://solscan.io/tx/${tr.sig}" target="_blank" rel="noopener">tx</a>` : ""}</div></div>`).join("") || `<p class="empty">No trades yet. The desk meets every 5 minutes.</p>`;
   const wall = (d.wall || []).slice(0, 12).map((w) => `<li><span>${short(w.from)}</span><b>${w.sol} SOL</b></li>`).join("") || `<li class="empty">Be the first name on the wall.</li>`;
   const gallery = (perks.gallery || []).slice(0, 8).map((g) => `<a class="art" href="${esc(g.url)}" target="_blank" rel="noopener" title="${esc(g.request)}"><img src="${esc(g.url)}" alt="" loading="lazy"></a>`).join("");
   const nextDesk = t.nextDeskAt ? Math.max(0, Math.round((t.nextDeskAt - (net.world?.serverNow || Date.now())) / 60000)) : null;
@@ -243,6 +243,7 @@ export function renderTreasury(world) {
       ${t.thesis ? `<div class="thesis">“${esc(t.thesis)}”</div>` : ""}
       <div class="dim">${nextDesk != null ? `Next desk session in ~${nextDesk} min` : ""}</div>
     </div>
+    ${scalperCard(world)}
     <div class="card"><h4>Positions</h4><table class="tbl"><thead><tr><th>Token</th><th>Value</th><th>PnL</th></tr></thead><tbody>${posRows}</tbody></table></div>
     <div class="card"><h4>Trade log</h4>${trades}</div>
     <div class="card support">
@@ -399,6 +400,24 @@ export function renderLeaderboard(world) {
       <b class="${r.totalSol > 0 ? "up" : r.totalSol < 0 ? "down" : ""}">${signed(r.totalSol, 4)}</b></div>`).join("")}
     <p class="dim">A sell is credited to whoever opened the position. Open positions count at their current value.</p></div>`;
   el.querySelectorAll(".board-row").forEach((row) => row.addEventListener("click", () => openProfile(row.dataset.id)));
+}
+
+function scalperCard(world) {
+  const s = world.scalper;
+  if (!s) return `<div class="card"><h4>⚡ Scalper</h4><p class="empty">Warming up: first scan within a minute.</p></div>`;
+  const d = s.stats || {}, a = s.allTime || {};
+  const winRate = a.exits ? Math.round((a.wins / a.exits) * 100) : null;
+  const ago = s.lastScanAt ? Math.max(0, Math.round(((net.world?.serverNow || Date.now()) - s.lastScanAt) / 1000)) : null;
+  const watch = (s.candidates || []).slice(0, 5).map((c) => `<li><b>${esc(c.symbol)}</b> <span class="up">${signed(c.change5m, 1)}% 5m</span> <span class="dim">· buyers ${c.ratio}× · $${Math.round(c.vol1h / 1000)}k 1h vol</span></li>`).join("");
+  return `<div class="card scalper"><h4>⚡ Scalper · fast momentum trades on high-volume coins</h4>
+    <div class="stat-row">
+      <div class="stat">Today<b>${d.entries || 0} in · ${d.exits || 0} out</b></div>
+      <div class="stat">Today PnL<b class="${(d.realizedSol || 0) >= 0 ? "up" : "down"}">${signed(d.realizedSol || 0, 4)}</b></div>
+      <div class="stat">All time<b class="${(a.realizedSol || 0) >= 0 ? "up" : "down"}">${signed(a.realizedSol || 0, 4)}</b></div>
+      <div class="stat">Win rate<b>${winRate == null ? "—" : `${winRate}%`}</b></div>
+    </div>
+    <p class="dim">Buys breakouts (5m up, buyers well ahead of sellers, real 1h volume), exits on a −5% stop, a trailing stop once +5%, +18% take-profit, a 20-minute time stop or when sellers take over. Scanned ${s.scanned || 0} top-volume coins${ago != null ? ` ${ago}s ago` : ""}.</p>
+    ${watch ? `<h5 class="sub-h">Breakout watchlist</h5><ul class="watch">${watch}</ul>` : `<p class="dim">No breakout passes the filters right now. Waiting is part of the strategy.</p>`}</div>`;
 }
 
 function upgradesCard(world) {

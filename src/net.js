@@ -55,4 +55,6 @@ export function startPolling(intervalMs = 4000) {
   setInterval(fetchWorld, intervalMs);
   checkHealth();
   setInterval(checkHealth, 60_000); // env changes after a redeploy show up within a minute
+  // the scalper reacts every ~30s while someone is watching (the server ignores extra pings)
+  setInterval(() => { if (!document.hidden) fetch("/api/scalp", { method: "POST" }).catch(() => {}); }, 30_000);
 }

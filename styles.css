@@ -285,6 +285,13 @@ a.btn { text-decoration: none; display: inline-block; }
 .board-row img { width: 28px; height: 28px; image-rendering: pixelated; border-radius: 6px; background: #0006; }
 .board-row .nm { font-weight: 700; }
 
+/* Scalper */
+.card.scalper { border-color: #f59e0b88; }
+.card.scalper .stat-row { margin: 6px 0 8px; }
+.sub-h { margin: 8px 0 4px; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+.watch { margin: 0; padding-left: 16px; font-size: 12px; }
+.watch li { margin: 3px 0; }
+
 /* Upgrades */
 .upgrades { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .upgrades li { display: flex; gap: 10px; font-size: 13px; }
