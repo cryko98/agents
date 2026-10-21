@@ -161,7 +161,9 @@ export function updateStatus() {
 
 // The server records failed Claude calls in world.events; surface the latest one for 15 minutes.
 function recentClaudeError() {
-  const ev = (net.world?.events || []).filter((e) => /scene-fallback|research-error/.test(e.type) && Date.now() + net.offset - e.t < 15 * 60_000).pop();
+  const events = net.world?.events || [];
+  const lastOk = events.filter((e) => e.type === "claude-ok").pop()?.t || 0;
+  const ev = events.filter((e) => /scene-fallback|research-error/.test(e.type) && e.t > lastOk && Date.now() + net.offset - e.t < 15 * 60_000).pop();
   if (!ev) return null;
   if (/authentication_error|invalid x-api-key/.test(ev.error || "")) return "Claude key rejected (401) · check ANTHROPIC_API_KEY";
   if (/rate_limit|429/.test(ev.error || "")) return "Claude rate limited · canned lines for now";
