@@ -45,7 +45,10 @@ Truth Social posts (public mirror). With `X_BEARER_TOKEN` (X API) it also reads 
 `X_WATCH` (default: elonmusk, realDonaldTrump, cobie and more) in near real time; without it a
 web-search sweep looks for their posts every `SIGNAL_WEBSEARCH_MIN` minutes (default 20). A fast
 model scores new items 0-10; `HOT_SIGNAL_SCORE` (default 8) or more triggers a flash launch sprint.
-If the post has an image that is the meme, it becomes the logo (cropped/fitted to 1:1 with sharp).
+With `NEWS_ONLY` on (the default) the crew launches only coins built on a radar story, and the
+logo is always the story's real photo (feed image, og:image or the same story on Bing News),
+cropped/fitted to 1:1 with sharp; a story without a usable photo is dropped. `NEWS_ONLY=0` brings
+back research sprints every few minutes and generated logos.
 
 **Support** (`lib/donations.js`). The crew wallet address is shown on the Treasury tab. Incoming
 SOL is detected on-chain and lands on the Wall of Fame; the agents thank donors in their next
