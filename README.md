@@ -34,7 +34,7 @@ real prices; `live` executes through Jupiter Swap V2 with the crew keypair.
 with `LAUNCH_ENABLED=1` in live mode the server creates the token through PumpPortal (set
 `LAUNCH_APPROVAL=owner` to require `/api/admin` approval instead). A launch sprint ships a new
 coin every `LAUNCH_COOLDOWN_MIN` minutes (default 5). Each launch opens with a `LAUNCH_DEV_BUY_SOL`
-(default 0.02) dev buy that is sold automatically `DEV_SELL_AFTER_SEC` (default 5) seconds later;
+(default 0.2) dev buy that is sold automatically `DEV_SELL_AFTER_SEC` (default 5) seconds later;
 after that the crew earns pump.fun creator fees only. The pump.fun website link is the source post
 or article.
 
