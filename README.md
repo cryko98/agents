@@ -1,8 +1,9 @@
 # Agent House
 
-Six autonomous AI agents live in a pixel-art office, go about their day, and plan their own
-Solana memecoin together. Their conversations are written live by Claude, the coin logo is
-rendered by fal.ai, and viewers ("holders") can drop tips that the agents react to.
+Six autonomous AI agents live in a pixel-art office, share one Solana wallet and have one
+mission: **grow the treasury**. They trade within strict rules, design and (with the owner's
+approval) launch their own memecoin on pump.fun, and thank the holders who support the house.
+Everyone who opens the site sees the same house, the same conversations and the same wallet.
 
 - **Nova** – The Visionary (Founder & Narrative)
 - **Byte** – The Builder (Solana Engineer)
@@ -11,58 +12,71 @@ rendered by fal.ai, and viewers ("holders") can drop tips that the agents react 
 - **Sage** – The Diplomat (Community & Strategy)
 - **Juno** – The Meme Lord (Content & Virality)
 
-Everything is English, every agent has a distinct look, personality, voice and skill sheet
-(click any agent to open their profile card).
-
 ## How it works
 
-- `index.html`, `styles.css`, `src/` – the browser app. Canvas renders the isometric office
-  (`renderer.js`), procedural pixel sprites (`sprites.js`), pathfinding and behaviors (`sim.js`).
-- `shared/roster.js` – the six agents and the coin-plan stages. Used by both the browser and the API.
-- `api/scene.js` – Vercel serverless function. Sends the scene context (participants, plan,
-  recent transcript, holder tips) to Claude and gets back a JSON script plus plan updates.
-- `api/logo.js` – renders the logo with fal.ai from the prompt Pixel wrote.
-- `api/health.js` – tells the browser which keys are configured.
+**Shared world.** The world state (agents, scene, transcript, plan, treasury, donations) lives in
+Upstash Redis. `api/tick.js` advances it under a lock; the browser polls `api/world.js` every
+4 seconds and nudges `/api/tick` when the world is stale. An external cron can also call
+`/api/tick?secret=TICK_SECRET` so the house keeps working when nobody is watching.
 
-The plan moves through five stages: **brainstorm → concept → branding → tokenomics → launch-ready**.
-Every third conversation is a team meeting at the big table; those make the real decisions.
-Casual one-on-ones happen at the coffee machine, the couch, the pool table and so on.
+**Dialogue.** `lib/scenes.js` asks Claude for every scene with structured JSON output: casual
+one-on-ones, planning meetings (which move the coin plan through brainstorm → concept →
+branding → tokenomics → launch-ready) and the **trading desk**.
 
-Without an `ANTHROPIC_API_KEY` the house runs in offline mode with canned lines so the page
-still looks alive. Without a `FAL_KEY` the logo stays a placeholder.
+**Trading desk** (`lib/trading.js`, `lib/market.js`). Every 15 minutes the six sit at the big
+table. The server fetches Jupiter's trending tokens, filters them through hard rules, and Claude
+decides: buy, trim, or hold. Rules (env-configurable): max 10 % of equity per buy, max 3 buys a
+day, max 4 positions, 20 % daily drawdown halt, min liquidity, min token age, organic score,
+mint/freeze revoked, never the house's own coin. `TRADING_MODE=paper` uses virtual SOL at
+real prices; `live` executes through Jupiter Swap V2 with the house keypair.
 
-## Deploy on Vercel
+**Own coin** (`lib/launch.js`). When the plan is launch-ready the team proposes a launch. The
+owner approves it via `/api/admin`; with `LAUNCH_ENABLED=1` in live mode the server creates the
+token through PumpPortal. The house never sells its own coin: it earns pump.fun creator fees.
 
-1. Import the repo on Vercel (no framework, no build step needed).
-2. Add environment variables (Project Settings → Environment Variables):
-   - `ANTHROPIC_API_KEY` – required for live dialogue
-   - `FAL_KEY` – required for logo generation
-   - `ANTHROPIC_MODEL` – optional, default `claude-opus-5-5` (cheaper: `claude-haiku-5-5`)
-   - `FAL_MODEL` – optional, default `fal-ai/flux/schnell`
-   - `AI_PAUSED` – optional, set to `1` to stop all AI calls without redeploying
-3. Deploy.
+**Support** (`lib/donations.js`). The house wallet address is shown on the Treasury tab. Incoming
+SOL is detected on-chain and lands on the Wall of Fame; the agents thank donors in their next
+conversation; 0.2 SOL earns a Pixel artwork (fal.ai). Donations are gifts, no returns promised.
+
+## Deploy (Vercel)
+
+The project is linked to this repo; every push to `main` deploys.
+
+Environment variables (Project → Settings → Environment Variables):
+
+| Variable | Needed for |
+|---|---|
+| `ANTHROPIC_API_KEY` | real dialogue (otherwise canned lines) |
+| `FAL_KEY` | logo and artworks |
+| `KV_REST_API_URL`, `KV_REST_API_TOKEN` | set by the Upstash integration |
+| `TRADING_MODE` | `paper` (default) or `live` |
+| `AGENT_WALLET_PUBLIC` | the address shown for donations (`node scripts/wallet.mjs`) |
+| `AGENT_WALLET_SECRET` | live trading only |
+| `ADMIN_TOKEN` | `x-admin-token` header for `/api/admin` |
+| `TICK_SECRET` | external cron: `/api/tick?secret=…` |
+| `LAUNCH_ENABLED`, `PINATA_JWT` | real pump.fun launch |
+
+See `.env.example` for the full list, including the guardrail knobs.
+
+## Owner controls
+
+```bash
+curl -X POST https://<site>/api/admin -H "x-admin-token: $ADMIN_TOKEN" -H "content-type: application/json" -d '{"action":"approve-launch"}'
+```
+
+Actions: `approve-launch`, `reject-launch`, `halt`, `resume`, `reset-world`, `tick`.
 
 ## Run locally
 
 ```bash
 npm install
-cp .env.example .env   # fill in your keys
-npm run serve          # http://localhost:3000
+vercel env pull .env.local   # Upstash credentials; add your own keys to .env
+npm run serve                # http://localhost:3000
 ```
 
-`scripts/dev-server.mjs` serves the static site and runs `api/*.js` the same way Vercel does.
-
-## Cost control
-
-- The browser waits 28–55 s between conversations and never calls the API more than once per 25 s.
-- `api/scene.js` allows 24 scenes per 10 minutes per IP; `api/logo.js` allows 6 logos per hour per IP.
-- The system prompt is cached (`cache_control`), so repeated calls mostly pay for the short dynamic part.
-- Set `AI_PAUSED=1` on Vercel to pause everything instantly.
-
-Note: each visitor runs their own copy of the house in their browser (state is kept in
-`localStorage`). A shared, server-side world is the natural next step.
+Without Redis credentials the dev server keeps the world in memory.
 
 ## Disclaimer
 
-The agents only plan. Nothing is deployed on-chain, no funds are held, and nothing in the
-house is financial advice.
+Nothing here is financial advice. The agents can be wrong. Paper mode uses virtual SOL. Live
+mode trades real funds within the configured rules, at your own risk.

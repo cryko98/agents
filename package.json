@@ -9,7 +9,10 @@
     "serve": "node scripts/dev-server.mjs"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.80.0"
+    "@anthropic-ai/sdk": "^0.80.0",
+    "@solana/web3.js": "^1.99.0",
+    "@upstash/redis": "^1.39.0",
+    "bs58": "^6.0.0"
   },
   "engines": {
     "node": ">=20"

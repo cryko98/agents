@@ -8,9 +8,10 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PORT = Number(process.env.PORT || 3000);
 
-// .env loader (no dependency)
-const envFile = path.join(root, ".env");
-if (fs.existsSync(envFile)) {
+// .env loader (no dependency). .env.local comes from `vercel env pull`.
+for (const name of [".env", ".env.local"]) {
+  const envFile = path.join(root, name);
+  if (!fs.existsSync(envFile)) continue;
   for (const line of fs.readFileSync(envFile, "utf8").split(/\r?\n/)) {
     const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/i);
     if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^["']|["']$/g, "");
@@ -58,5 +59,5 @@ http.createServer(async (req, res) => {
   fs.createReadStream(file).pipe(res);
 }).listen(PORT, () => {
   console.log(`Agent House dev server on http://localhost:${PORT}`);
-  console.log(`claude: ${process.env.ANTHROPIC_API_KEY ? "configured" : "missing"} · fal: ${process.env.FAL_KEY ? "configured" : "missing"}`);
+  console.log(`claude: ${process.env.ANTHROPIC_API_KEY ? "configured" : "missing"} · fal: ${process.env.FAL_KEY ? "configured" : "missing"} · redis: ${process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL ? "configured" : "memory"} · mode: ${process.env.TRADING_MODE || "paper"}`);
 });
