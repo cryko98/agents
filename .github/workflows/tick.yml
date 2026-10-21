@@ -22,9 +22,9 @@ jobs:
     steps:
       - name: Full tick
         run: curl -sS -m 150 -X POST "$SITE/api/tick${TICK_SECRET:+?secret=$TICK_SECRET}" | head -c 400; echo
-      - name: Scalper loop (about 4.5 minutes)
+      - name: Scalper loop (about 4.5 minutes, every 15 seconds)
         run: |
-          for i in $(seq 1 9); do
+          for i in $(seq 1 18); do
             curl -sS -m 60 -X POST "$SITE/api/scalp" | head -c 300; echo
-            sleep 30
+            sleep 15
           done

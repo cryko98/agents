@@ -408,15 +408,17 @@ function scalperCard(world) {
   const d = s.stats || {}, a = s.allTime || {};
   const winRate = a.exits ? Math.round((a.wins / a.exits) * 100) : null;
   const ago = s.lastScanAt ? Math.max(0, Math.round(((net.world?.serverNow || Date.now()) - s.lastScanAt) / 1000)) : null;
-  const watch = (s.candidates || []).slice(0, 5).map((c) => `<li><b>${esc(c.symbol)}</b> <span class="up">${signed(c.change5m, 1)}% 5m</span> <span class="dim">· buyers ${c.ratio}× · $${Math.round(c.vol1h / 1000)}k 1h vol</span></li>`).join("");
-  return `<div class="card scalper"><h4>⚡ Scalper · fast momentum trades on high-volume coins</h4>
+  const watch = (s.candidates || []).slice(0, 5).map((c) => `<li><b>${esc(c.symbol)}</b> <span class="up">${signed(c.change5m, 1)}% 5m</span> <span class="dim">· ${c.setup === "migration" ? `migrated ${c.gradMin}m ago` : "breakout"} · buyers ${c.ratio}× · $${Math.round((c.vol5m || 0) / 1000)}k 5m vol</span></li>`).join("");
+  const by = Object.entries(s.bySetup || {}).map(([k, v]) => `${k}: <b class="${v.realizedSol >= 0 ? "up" : "down"}">${signed(v.realizedSol, 4)}</b> (${v.wins}/${v.exits})`).join(" · ");
+  return `<div class="card scalper"><h4>⚡ Scalper · fresh pump.fun migrations, in and out fast</h4>
     <div class="stat-row">
       <div class="stat">Today<b>${d.entries || 0} in · ${d.exits || 0} out</b></div>
       <div class="stat">Today PnL<b class="${(d.realizedSol || 0) >= 0 ? "up" : "down"}">${signed(d.realizedSol || 0, 4)}</b></div>
       <div class="stat">All time<b class="${(a.realizedSol || 0) >= 0 ? "up" : "down"}">${signed(a.realizedSol || 0, 4)}</b></div>
       <div class="stat">Win rate<b>${winRate == null ? "—" : `${winRate}%`}</b></div>
     </div>
-    <p class="dim">Buys breakouts (5m up, buyers well ahead of sellers, real 1h volume), exits on a −5% stop, a trailing stop once +5%, +18% take-profit, a 20-minute time stop or when sellers take over. Scanned ${s.scanned || 0} top-volume coins${ago != null ? ` ${ago}s ago` : ""}.</p>
+    ${by ? `<p class="dim">By setup: ${by}</p>` : ""}
+    <p class="dim">Main setup: coins that migrated off pump.fun (or another launchpad) in the last 4 hours and pull real 5-minute volume with buyers ahead. 15% of equity per trade; half sold at +10%, the rest trails and is fully out by +20%; −10% stop; out after 12 minutes if it goes nowhere. Second setup: strong breakouts on established high-volume coins. Scanned ${s.scanned || 0} hot coins (${s.freshMigrations || 0} fresh migrations)${ago != null ? ` ${ago}s ago` : ""}.</p>
     ${watch ? `<h5 class="sub-h">Breakout watchlist</h5><ul class="watch">${watch}</ul>` : `<p class="dim">No breakout passes the filters right now. Waiting is part of the strategy.</p>`}</div>`;
 }
 
