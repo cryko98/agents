@@ -153,9 +153,20 @@ export function updateStatus() {
   else if (!net.world) label = "connecting…";
   else if (h?.paused) { label = "AI paused"; el.classList.add("offline"); }
   else if (h && !h.claude) { label = "canned lines (no Claude key)"; el.classList.add("offline"); }
+  else if (recentClaudeError()) { label = recentClaudeError(); el.classList.add("offline"); }
   else if (h && !h.redis) { label = "live · memory store (no Redis)"; el.classList.add("busy"); }
   else { label = `live · shared world${h?.model ? " · " + h.model : ""}`; el.classList.add("online"); }
   el.querySelector(".label").textContent = label;
+}
+
+// The server records failed Claude calls in world.events; surface the latest one for 15 minutes.
+function recentClaudeError() {
+  const ev = (net.world?.events || []).filter((e) => /scene-fallback|research-error/.test(e.type) && Date.now() + net.offset - e.t < 15 * 60_000).pop();
+  if (!ev) return null;
+  if (/authentication_error|invalid x-api-key/.test(ev.error || "")) return "Claude key rejected (401) · check ANTHROPIC_API_KEY";
+  if (/rate_limit|429/.test(ev.error || "")) return "Claude rate limited · canned lines for now";
+  if (/credit|billing|402/.test(ev.error || "")) return "Claude credit exhausted · canned lines";
+  return `Claude call failed · ${String(ev.error || "").slice(0, 60)}`;
 }
 
 export function updateTicker(world) {
