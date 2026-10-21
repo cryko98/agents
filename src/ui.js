@@ -228,6 +228,7 @@ export function renderTreasury(world) {
       <div class="row"><span class="mode ${t.mode}">${t.mode.toUpperCase()}</span><span class="dim">${t.mode === "paper" ? "Virtual SOL, real prices, real rules." : "Real wallet, real trades."}</span></div>
       <div class="big">${sol(t.equitySol)}</div>
       <div class="${t.pnlSol >= 0 ? "up" : "down"}">${signed(t.pnlSol)} SOL (${signed(t.pnlPct, 1)}%) since start · cash ${sol(cash)}${t.solUsd ? ` · SOL $${Number(t.solUsd).toFixed(0)}` : ""}</div>
+      ${t.mode === "paper" && t.realSol != null ? `<div class="dim">Real wallet: ${sol(t.realSol, 4)} (used for the coin launch and gifts)</div>` : ""}
       ${t.halted ? `<div class="halt">🛑 ${esc(t.halted.reason)}</div>` : ""}
       ${t.thesis ? `<div class="thesis">“${esc(t.thesis)}”</div>` : ""}
       <div class="dim">${nextDesk != null ? `Next desk session in ~${nextDesk} min` : ""}</div>
