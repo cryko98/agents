@@ -67,6 +67,15 @@ export default async function handler(req, res) {
         if (world.research?.failedAt) world.research = null;
         break;
       }
+      case "reset-paper": {
+        // fresh paper treasury: cash back to the start, no positions, no trades, scalper stats cleared.
+        // Launches, creator fees, donations, the coin plan and the vote are kept.
+        const t = world.treasury, start = Number(process.env.PAPER_START_SOL || t.startSol || 2);
+        Object.assign(t, { startSol: start, sol: start, positions: {}, trades: [], equitySol: start, pnlSol: 0, pnlPct: 0, dayStartEquity: start, tradesToday: 0, halted: null, thesis: null, nextDeskAt: Date.now() + 60_000 });
+        world.scalper = null;
+        pushTranscript(world, { kind: "system", text: `🔄 Fresh start: the paper wallet is back to ${start} SOL with the new scalping strategy. Every trade from here counts.` });
+        break;
+      }
       case "halt":
         world.treasury.halted = { day: "manual", reason: String(body.reason || "Trading paused by the owner.") };
         pushTranscript(world, { kind: "system", text: `🛑 ${world.treasury.halted.reason}` });
