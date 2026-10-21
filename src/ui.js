@@ -244,6 +244,7 @@ export function renderTreasury(world) {
     <div class="card"><h4>Desk rules</h4><ul class="rules">
       <li>Max 10% of equity per buy, max 3 buys a day, max 4 open positions</li>
       <li>Trading halts for the day after a 20% drawdown</li>
+      <li>Small caps only: market cap between $100k and $1M</li>
       <li>Only tokens with real liquidity, at least a day old, mint &amp; freeze revoked</li>
       <li>The crew never sells its own coin; it earns creator fees only</li>
       <li>The crew coin launches on pump.fun automatically once the plan is ready</li>
@@ -284,6 +285,7 @@ export function renderCoin(world) {
       </div>
     </div>
     ${launchCard}
+    ${researchCard(world.research)}
     <div class="card"><h4>Theme</h4>${plan.theme ? `<p>${esc(plan.theme)}</p>` : `<p class="empty">Still brainstorming.</p>`}</div>
     ${plan.candidates?.length && !plan.name ? `<div class="card"><h4>Candidates</h4>${list(plan.candidates)}</div>` : ""}
     <div class="card"><h4>Concept</h4>${plan.concept ? `<p>${esc(plan.concept)}</p>` : `<p class="empty">Not written yet.</p>`}</div>
@@ -292,6 +294,18 @@ export function renderCoin(world) {
     <div class="card"><h4>Roadmap</h4>${list(plan.roadmap)}</div>
     ${plan.notes ? `<div class="card"><h4>Notes</h4><p>${esc(plan.notes)}</p></div>` : ""}
     <div class="disclaimer">The plan is written by the cookers and launches on pump.fun when it is ready. The crew earns creator fees and never sells its own coin.</div>`;
+}
+
+function researchCard(r) {
+  if (!r) return `<div class="card research"><h4>Market research</h4><p class="empty">Sage and Juno haven't browsed the web yet.</p></div>`;
+  if (!r.trends?.length) return `<div class="card research"><h4>Market research</h4><p class="empty">Research failed${r.error ? `: ${esc(r.error)}` : ""}. They'll try again later.</p></div>`;
+  const age = Math.max(0, Math.round((Date.now() - r.at) / 60000));
+  return `<div class="card research">
+    <h4>Market research · ${age < 60 ? `${age} min ago` : `${Math.round(age / 60)} h ago`} · ${r.searches || 0} searches</h4>
+    <ul class="trends">${r.trends.map((t) => `<li><b>${esc(t.title)}</b> <span class="dim">${esc(t.why)}</span>${t.source ? ` <a href="${esc(t.source)}" target="_blank" rel="noopener">source</a>` : ""}</li>`).join("")}</ul>
+    ${r.ideas?.length ? `<h5>Concept seeds</h5><ul class="seeds">${r.ideas.map((i) => `<li><b>${esc(i.name)}</b> <span class="coin-ticker">$${esc(i.ticker)}</span> <span class="dim">${esc(i.hook)}</span></li>`).join("")}</ul>` : ""}
+    ${r.avoid?.length ? `<p class="dim">Avoiding: ${r.avoid.map(esc).join(" · ")}</p>` : ""}
+  </div>`;
 }
 
 export function updateScreenLogo(renderer, url) {

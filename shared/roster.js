@@ -96,7 +96,7 @@ export const STAGES = ["brainstorm", "concept", "branding", "tokenomics", "launc
 export const STAGE_INFO = {
   brainstorm: {
     label: "Brainstorm",
-    goal: "Explore themes and vibes for the coin. Argue about what would actually be funny and spreadable. End with a short list of 2-3 candidate concepts (theme + rough name idea). Do not finalize yet.",
+    goal: "Explore concepts for the coin, starting from what is trending on the web right now (news, tech, culture, crypto, jokes). Be original: no generic animal coins. Argue about what would actually be funny and spreadable this week. End with 2-3 candidate concepts of different kinds (name + one-line hook + the trend it rides). Do not finalize yet.",
   },
   concept: {
     label: "Concept",

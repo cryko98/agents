@@ -26,7 +26,7 @@ branding → tokenomics → launch-ready) and the **trading desk**.
 **Trading desk** (`lib/trading.js`, `lib/market.js`). Every 15 minutes the six sit at the big
 table. The server fetches Jupiter's trending tokens, filters them through hard rules, and Claude
 decides: buy, trim, or hold. Rules (env-configurable): max 10 % of equity per buy, max 3 buys a
-day, max 4 positions, 20 % daily drawdown halt, min liquidity, min token age, organic score,
+day, max 4 positions, 20 % daily drawdown halt, market cap between $100k and $1M, min liquidity, min token age, organic score,
 mint/freeze revoked, never the crew's own coin. `TRADING_MODE=paper` uses virtual SOL at
 real prices; `live` executes through Jupiter Swap V2 with the crew keypair.
 
