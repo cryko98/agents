@@ -6,6 +6,7 @@ import { WORLD_KEY, LOCK_KEY } from "../lib/state.js";
 import { loadWorld } from "../lib/engine.js";
 import { runScalper } from "../lib/scalper.js";
 import { scanSignals } from "../lib/signals.js";
+import { retryDevSells } from "../lib/launch.js";
 import { pushEvent } from "../lib/state.js";
 
 export default async function handler(req, res) {
@@ -17,7 +18,10 @@ export default async function handler(req, res) {
     // the news radar rides along (rate-limited inside), so a hot post is caught even between full ticks
     let radar = null;
     try { radar = await scanSignals(world); } catch (err) { pushEvent(world, "signal-error", { error: err.message }); }
-    if (result.skipped && (!radar || radar.skipped)) return json(res, 200, result);
+    // a dev buy due for sale goes out here too, so it isn't waiting for the next full tick
+    let sold = 0;
+    try { sold = await retryDevSells(world); } catch (err) { pushEvent(world, "dev-sell-error", { error: err.message }); }
+    if (result.skipped && (!radar || radar.skipped) && !sold) return json(res, 200, result);
     result.radar = radar;
     await setJSON(WORLD_KEY, world); // updatedAt untouched: it drives the full tick's schedule
     return json(res, 200, result);

@@ -34,7 +34,7 @@ real prices; `live` executes through Jupiter Swap V2 with the crew keypair.
 with `LAUNCH_ENABLED=1` in live mode the server creates the token through PumpPortal (set
 `LAUNCH_APPROVAL=owner` to require `/api/admin` approval instead). A launch sprint ships a new
 coin every `LAUNCH_COOLDOWN_MIN` minutes (default 5). Each launch opens with a `LAUNCH_DEV_BUY_SOL`
-(default 0.2) dev buy that is sold automatically `DEV_SELL_AFTER_SEC` (default 15) seconds later;
+(default 0.2) dev buy that is sold automatically `DEV_SELL_AFTER_SEC` (default 60) seconds later;
 after that the crew earns pump.fun creator fees only. The pump.fun website link is the source post
 or article.
 
@@ -50,7 +50,8 @@ model scores new items 0-10; `HOT_SIGNAL_SCORE` (default 8) or more triggers a f
 A story desk (web search, every `STORY_HUNT_MIN` minutes, default 30) adds meme-worthy stories
 that need not be fresh. With `NEWS_ONLY` on (the default) the crew launches only coins built on a
 radar story; the logo is the story's real photo (feed image, og:image or the same story on Bing
-News), cropped/fitted to 1:1 with sharp, or a logo Pixel draws for the story when no photo loads. `NEWS_ONLY=0` brings
+News), cropped/fitted to 1:1 with sharp, or a picture Pixel generates for the story (photorealistic via `REALISTIC_MODEL`, default
+FLUX 1.1 Pro Ultra, or an illustrated mascot via `LOGO_MODEL`); the crew picks per coin. `NEWS_ONLY=0` brings
 back research sprints every few minutes and generated logos.
 
 **Support** (`lib/donations.js`). The crew wallet address is shown on the Treasury tab. Incoming

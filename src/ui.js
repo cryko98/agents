@@ -273,8 +273,8 @@ export function renderTreasury(world) {
       <li>Small caps: $15k–$1M market cap, extra safety checks below $100k</li>
       <li>Automatic stop-loss at −30%, take half off at +60%</li>
       <li>Only tokens with real liquidity, at least 3h old, mint &amp; freeze revoked</li>
-      <li>Every launch: a 0.2 SOL dev buy, sold automatically ~15 seconds later; then creator fees only</li>
-      <li>Coins launch only from stories on Juno's radar (fresh news or great older stories); the real photo is the logo, or Pixel draws one when there is none</li>
+      <li>Every launch: a 0.2 SOL dev buy, sold automatically ~1 minute later; then creator fees only</li>
+      <li>Coins launch only from stories on Juno's radar (fresh news or great older stories); the logo is the story's real photo or a picture Pixel generates for it</li>
     </ul></div>
     <div class="disclaimer">Nothing here is financial advice. Paper mode uses virtual SOL. The agents can be wrong, and often are.</div>`;
   $("#copy-addr")?.addEventListener("click", () => { navigator.clipboard?.writeText(d.address); $("#copy-addr").textContent = "Copied"; setTimeout(() => { $("#copy-addr").textContent = "Copy"; }, 1500); });
@@ -298,7 +298,7 @@ export function renderCoin(world) {
   const launchCard = {
     none: "", proposed: `<div class="card launch"><h4>Launch</h4><p>🚀 The crew wants to launch <b>${esc(launch.name)}</b> ($${esc(launch.ticker)}) on pump.fun. Waiting for the owner's approval.</p></div>`,
     approved: `<div class="card launch"><h4>Launch</h4><p>🚀 <b>${esc(launch.name)}</b> ($${esc(launch.ticker)}) is launching on pump.fun. Byte is preparing the transaction.</p></div>`,
-    launched: `<div class="card launch"><h4>Launch</h4><p>🟢 <b>${esc(launch.name)}</b> is live: <a href="${esc(launch.url)}" target="_blank" rel="noopener">${esc(launch.url)}</a><br><span class="dim">The dev buy is sold within seconds; after that the crew earns creator fees only.</span></p></div>`,
+    launched: `<div class="card launch"><h4>Launch</h4><p>🟢 <b>${esc(launch.name)}</b> is live: <a href="${esc(launch.url)}" target="_blank" rel="noopener">${esc(launch.url)}</a><br><span class="dim">The dev buy is sold about a minute after launch; after that the crew earns creator fees only.</span></p></div>`,
     simulated: `<div class="card launch"><h4>Launch</h4><p>🧪 Launch simulated (live launching is off). The coin exists on the whiteboard only.</p></div>`,
     failed: `<div class="card launch"><h4>Launch</h4><p>Launch failed: ${esc(launch.error || "unknown")}</p></div>`,
   }[launch.status] || "";
@@ -306,7 +306,7 @@ export function renderCoin(world) {
   const launched = (world.launches || []).filter((l) => l.status === "launched");
   const launchedCard = launched.length ? `<div class="card launch"><h4>Launched by the crew · ${launched.length} coin${launched.length > 1 ? "s" : ""}</h4>
     <ul class="launched">${launched.map((l) => `<li>${l.logoUrl ? `<img src="${esc(l.logoUrl)}" alt="">` : ""}<div><b>${esc(l.name)}</b> <span class="coin-ticker">$${esc(l.ticker)}</span><br><a href="/coin/${encodeURIComponent(l.ticker)}">birth record</a> · <a href="${esc(l.url)}" target="_blank" rel="noopener">pump.fun</a> · <span class="dim">${new Date(l.launchedAt).toLocaleDateString()}</span></div></li>`).join("")}</ul>
-    <p class="dim">Creator fees collected: <b>${(t.creatorFeesSol || 0).toFixed(4)} SOL</b>${t.pendingCreatorFeesSol ? ` · pending ${t.pendingCreatorFeesSol.toFixed(4)} SOL` : ""} · checked every 10 min. Launched autonomously; dev buys sold within seconds.</p></div>` : "";
+    <p class="dim">Creator fees collected: <b>${(t.creatorFeesSol || 0).toFixed(4)} SOL</b>${t.pendingCreatorFeesSol ? ` · pending ${t.pendingCreatorFeesSol.toFixed(4)} SOL` : ""} · checked every 10 min. Launched autonomously; dev buys sold about a minute after launch.</p></div>` : "";
   root.innerHTML = `
     ${launchedCard}
     <div><div class="stage-label">${launched.length ? `Next coin (#${launched.length + 1})` : "Coin plan"} · stage ${idx + 1}/${STAGES.length} · <b>${STAGE_INFO[plan.stage]?.label || plan.stage}</b></div><div class="stages" style="margin-top:6px">${stages}</div></div>
@@ -329,7 +329,7 @@ export function renderCoin(world) {
     <div class="card"><h4>Tokenomics</h4>${list(plan.tokenomics)}</div>
     <div class="card"><h4>Roadmap</h4>${list(plan.roadmap)}</div>
     ${plan.notes ? `<div class="card"><h4>Notes</h4><p>${esc(plan.notes)}</p></div>` : ""}
-    <div class="disclaimer">The plan is written by the cookers and launches on pump.fun when it is ready. Each launch has a small dev buy that is sold automatically within seconds; after that the crew earns creator fees only. Coins inspired by public posts are not affiliated with or endorsed by their authors.</div>`;
+    <div class="disclaimer">The plan is written by the cookers and launches on pump.fun when it is ready. Each launch has a dev buy that is sold automatically about a minute later; after that the crew earns creator fees only. Coins inspired by public posts are not affiliated with or endorsed by their authors.</div>`;
 }
 
 // ---------------- holder vote (Phantom) ----------------

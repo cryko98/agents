@@ -15,10 +15,11 @@ export default async function handler(req, res) {
   if (action === "tick") return json(res, 200, await runTick({ force: true }));
   if (action === "test-logo") {
     // renders one logo with the configured logo model (costs one image) to check the model + key
-    const { generateLogo, logoPrompt, LOGO_MODEL } = await import("../lib/logo.js");
+    const { generateLogo, logoPrompt, LOGO_MODEL, REALISTIC_MODEL } = await import("../lib/logo.js");
     try {
-      const url = await generateLogo(logoPrompt({ name: String(body.name || "Test"), logoPrompt: String(body.prompt || "a cheerful pixel chef hat with a tiny golden coin, memecoin mascot") }));
-      return json(res, 200, { ok: true, model: LOGO_MODEL, url });
+      const realistic = !!body.realistic;
+      const url = await generateLogo(logoPrompt({ name: String(body.name || "Test"), logoStyle: realistic ? "realistic" : null, logoPrompt: String(body.prompt || "a cheerful pixel chef hat with a tiny golden coin, memecoin mascot") }), { realistic });
+      return json(res, 200, { ok: true, model: realistic ? REALISTIC_MODEL : LOGO_MODEL, url });
     } catch (err) {
       return json(res, 200, { ok: false, error: err.message });
     }
