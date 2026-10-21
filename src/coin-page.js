@@ -4,6 +4,17 @@ import { portraitDataURL } from "./sprites.js";
 import { STAGE_INFO } from "../shared/roster.js";
 
 const root = document.getElementById("coin-root");
+/** One line about the dev bag: sold (with the result) or still held until it is in profit. */
+function devSellText(ds) {
+  if (!ds) return "";
+  if (ds.status === "sold") {
+    const mins = ds.afterMs ? Math.round(ds.afterMs / 60_000) : null;
+    return ` · sold${mins != null ? ` ${mins < 1 ? "under a minute" : `${mins} min`} after launch` : ""}${ds.solBack != null ? `: ${ds.solBack} SOL back` : ""}${ds.pnl != null ? ` (${ds.pnl >= 0 ? "+" : ""}${ds.pnl} SOL)` : ""}${ds.noBuyers ? " · nobody else bought" : ""}${ds.sig ? ` · <a href="https://solscan.io/tx/${esc(ds.sig)}" target="_blank" rel="noopener">tx</a>` : ""}`;
+  }
+  if (["holding", "pending", "scheduled"].includes(ds.status)) return ` · held until it can be sold at a profit${ds.value != null ? ` (worth ${ds.value} SOL now, ${ds.pnlPct >= 0 ? "+" : ""}${ds.pnlPct}%)` : ""}`;
+  return "";
+}
+
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const portraits = {};
 const portrait = (id) => (portraits[id] ||= byId[id] ? portraitDataURL(byId[id].look) : "");
@@ -55,7 +66,7 @@ function render(c) {
     <dt>Launched</dt><dd>${date(c.launchedAt)}</dd>
     <dt>Mint</dt><dd><code>${esc(c.mint)}</code></dd>
     ${c.signature ? `<dt>Launch transaction</dt><dd><a href="https://solscan.io/tx/${esc(c.signature)}" target="_blank" rel="noopener">${esc(c.signature.slice(0, 20))}…</a></dd>` : ""}
-    <dt>Dev buy</dt><dd>${c.devBuySol || 0} SOL${c.devSell?.status === "sold" ? ` · sold automatically ${c.devSell.afterMs ? Math.round(c.devSell.afterMs / 1000) + "s" : "seconds"} after launch${c.devSell.solBack != null ? ` (${c.devSell.solBack} SOL back)` : ""}${c.devSell.sig ? ` · <a href="https://solscan.io/tx/${esc(c.devSell.sig)}" target="_blank" rel="noopener">tx</a>` : ""}` : c.devBuySol ? " · sold automatically about a minute after launch" : ""}. After that the crew earns creator fees only.</dd>
+    <dt>Dev buy</dt><dd>${c.devBuySol || 0} SOL${devSellText(c.devSell)}. The crew sells it in profit, or after 3 minutes if nobody else buys, and also earns creator fees.</dd>
     ${(c.source || plan.source)?.url ? `<dt>Built on</dt><dd>${(c.source || plan.source).author ? "@" + esc((c.source || plan.source).author) + ": " : ""}"${esc((c.source || plan.source).title || "")}" · <a href="${esc((c.source || plan.source).url)}" target="_blank" rel="noopener">source</a> (not affiliated)</dd>` : ""}
     ${c.description ? `<dt>On-chain description</dt><dd>${esc(c.description)}</dd>` : ""}
   </dl></section>`);

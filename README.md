@@ -34,8 +34,9 @@ real prices; `live` executes through Jupiter Swap V2 with the crew keypair.
 with `LAUNCH_ENABLED=1` in live mode the server creates the token through PumpPortal (set
 `LAUNCH_APPROVAL=owner` to require `/api/admin` approval instead). A launch sprint ships a new
 coin every `LAUNCH_COOLDOWN_MIN` minutes (default 5). Each launch opens with a `LAUNCH_DEV_BUY_SOL`
-(default 0.2) dev buy that is sold automatically `DEV_SELL_AFTER_SEC` (default 60) seconds later;
-after that the crew earns pump.fun creator fees only. The pump.fun website link is the source post
+(default 0.2) dev buy. Every tick and scalper pass quotes it on the bonding curve and sells it once,
+after fees, it is `DEV_SELL_MIN_PROFIT_PCT` (default 3) in profit. If nobody else has bought within
+`DEV_SELL_NO_BUY_SEC` (default 180) it is sold anyway; `DEV_SELL_MAX_HOLD_MIN` (default off) adds a hard timeout. The crew also earns pump.fun creator fees. The pump.fun website link is the source post
 or article.
 
 **News radar** (`lib/signals.js`). Every minute it polls world headlines, animal / zoo stories, viral
