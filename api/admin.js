@@ -1,5 +1,5 @@
 // POST /api/admin - owner actions, protected by ADMIN_TOKEN (header x-admin-token).
-// actions: approve-launch, reject-launch, halt, resume, reset-plan, reset-world, tick
+// actions: approve-launch, retry-launch, reject-launch, test-pinata, halt, resume, clean, reset-plan, reset-world, tick
 import { json, readBody } from "../lib/http.js";
 import { getJSON, setJSON, acquireLock, releaseLock, db } from "../lib/db.js";
 import { WORLD_KEY, LOCK_KEY, TIPS_KEY, pushTranscript } from "../lib/state.js";
@@ -13,6 +13,16 @@ export default async function handler(req, res) {
   const body = await readBody(req);
   const action = String(body.action || "");
   if (action === "tick") return json(res, 200, await runTick({ force: true }));
+  if (action === "test-pinata") {
+    // uploads a tiny JSON file to check the Pinata key without touching the wallet
+    const { pinataUpload } = await import("../lib/launch.js");
+    try {
+      const url = await pinataUpload(new Blob([JSON.stringify({ test: "cookers", t: Date.now() })], { type: "application/json" }), "cookers-test.json");
+      return json(res, 200, { ok: true, url });
+    } catch (err) {
+      return json(res, 200, { ok: false, error: err.message });
+    }
+  }
   if (!(await acquireLock(LOCK_KEY, 30))) return json(res, 503, { error: "busy" });
   try {
     if (action === "reset-world") { await db().del(WORLD_KEY); await db().del(TIPS_KEY); return json(res, 200, { ok: true, reset: true }); }
@@ -23,6 +33,11 @@ export default async function handler(req, res) {
         if (world.launch.status !== "proposed") return json(res, 400, { error: `launch is ${world.launch.status}` });
         world.launch.status = "approved"; world.launch.approvedAt = Date.now();
         pushTranscript(world, { kind: "system", text: "✅ The owner approved the launch. Byte is preparing the transaction." });
+        break;
+      case "retry-launch":
+        if (world.launch.status !== "failed") return json(res, 400, { error: `launch is ${world.launch.status}` });
+        world.launch.status = "approved"; world.launch.error = null; world.launch.retriedAt = Date.now();
+        pushTranscript(world, { kind: "system", text: "🔁 Byte is retrying the launch." });
         break;
       case "reject-launch":
         world.launch = { status: "none", rejectedAt: Date.now() };
