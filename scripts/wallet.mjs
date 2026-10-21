@@ -1,4 +1,4 @@
-// Generate a fresh Solana keypair for the house wallet.
+// Generate a fresh Solana keypair for the crew wallet.
 // Usage: node scripts/wallet.mjs
 // Put the PUBLIC key in AGENT_WALLET_PUBLIC (safe to share) and, only when you go live,
 // the SECRET in AGENT_WALLET_SECRET on Vercel. Never commit the secret.

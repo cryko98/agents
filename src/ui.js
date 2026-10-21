@@ -199,7 +199,7 @@ export function closeProfile() { $("#profile-modal").hidden = true; }
 // ---------------- treasury ----------------
 export function renderTreasury(world) {
   const root = $("#treasury");
-  if (!world) { root.innerHTML = `<p class="empty" style="padding:14px">Connecting to the house wallet…</p>`; return; }
+  if (!world) { root.innerHTML = `<p class="empty" style="padding:14px">Connecting to the crew wallet…</p>`; return; }
   const t = world.treasury, d = world.donations, perks = world.perks;
   const positions = Object.entries(t.positions || {});
   const posRows = positions.length
@@ -222,9 +222,9 @@ export function renderTreasury(world) {
     <div class="card"><h4>Positions</h4><table class="tbl"><thead><tr><th>Token</th><th>Value</th><th>PnL</th></tr></thead><tbody>${posRows}</tbody></table></div>
     <div class="card"><h4>Trade log</h4>${trades}</div>
     <div class="card support">
-      <h4>Support the house</h4>
-      ${d.address ? `<div class="addr" title="House wallet"><code id="addr">${d.address}</code><button class="btn" id="copy-addr">Copy</button></div>` : `<p class="empty">The house wallet isn't configured yet.</p>`}
-      <p class="dim">Gifts to the house, nothing more. No returns, no tokens, no promises. What you do get:</p>
+      <h4>Support the crew</h4>
+      ${d.address ? `<div class="addr" title="Crew wallet"><code id="addr">${d.address}</code><button class="btn" id="copy-addr">Copy</button></div>` : `<p class="empty">The crew wallet isn't configured yet.</p>`}
+      <p class="dim">Gifts to the crew, nothing more. No returns, no tokens, no promises. What you do get:</p>
       <ul class="perks">
         <li><b>0.01 SOL</b> your name on the Wall of Fame and a thank-you from the team</li>
         <li><b>0.05 SOL</b> the agents react to your message in their next conversation</li>
@@ -245,8 +245,8 @@ export function renderTreasury(world) {
       <li>Max 10% of equity per buy, max 3 buys a day, max 4 open positions</li>
       <li>Trading halts for the day after a 20% drawdown</li>
       <li>Only tokens with real liquidity, at least a day old, mint &amp; freeze revoked</li>
-      <li>The house never sells its own coin; it earns creator fees only</li>
-      <li>Launching the house coin needs the owner's approval</li>
+      <li>The crew never sells its own coin; it earns creator fees only</li>
+      <li>The crew coin launches on pump.fun automatically once the plan is ready</li>
     </ul></div>
     <div class="disclaimer">Nothing here is financial advice. Paper mode uses virtual SOL. The agents can be wrong, and often are.</div>`;
   $("#copy-addr")?.addEventListener("click", () => { navigator.clipboard?.writeText(d.address); $("#copy-addr").textContent = "Copied"; setTimeout(() => { $("#copy-addr").textContent = "Copy"; }, 1500); });
@@ -268,9 +268,9 @@ export function renderCoin(world) {
   const logo = plan.logoUrl ? `<img src="${esc(plan.logoUrl)}" alt="logo">` : `<span class="ph">${esc((plan.ticker || "??").slice(0, 2))}</span>`;
   const list = (arr) => arr?.length ? `<ul>${arr.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>` : `<p class="empty">Not decided yet.</p>`;
   const launchCard = {
-    none: "", proposed: `<div class="card launch"><h4>Launch</h4><p>🚀 The team wants to launch <b>${esc(launch.name)}</b> ($${esc(launch.ticker)}) on pump.fun. Waiting for the owner's approval.</p></div>`,
-    approved: `<div class="card launch"><h4>Launch</h4><p>✅ Approved. Byte is preparing the transaction.</p></div>`,
-    launched: `<div class="card launch"><h4>Launch</h4><p>🟢 <b>${esc(launch.name)}</b> is live: <a href="${esc(launch.url)}" target="_blank" rel="noopener">${esc(launch.url)}</a><br><span class="dim">The house holds its creator-fee income only and never sells.</span></p></div>`,
+    none: "", proposed: `<div class="card launch"><h4>Launch</h4><p>🚀 The crew wants to launch <b>${esc(launch.name)}</b> ($${esc(launch.ticker)}) on pump.fun. Waiting for the owner's approval.</p></div>`,
+    approved: `<div class="card launch"><h4>Launch</h4><p>🚀 <b>${esc(launch.name)}</b> ($${esc(launch.ticker)}) is launching on pump.fun. Byte is preparing the transaction.</p></div>`,
+    launched: `<div class="card launch"><h4>Launch</h4><p>🟢 <b>${esc(launch.name)}</b> is live: <a href="${esc(launch.url)}" target="_blank" rel="noopener">${esc(launch.url)}</a><br><span class="dim">The crew earns creator fees only and never sells.</span></p></div>`,
     simulated: `<div class="card launch"><h4>Launch</h4><p>🧪 Launch simulated (live launching is off). The coin exists on the whiteboard only.</p></div>`,
     failed: `<div class="card launch"><h4>Launch</h4><p>Launch failed: ${esc(launch.error || "unknown")}</p></div>`,
   }[launch.status] || "";
@@ -291,7 +291,7 @@ export function renderCoin(world) {
     <div class="card"><h4>Tokenomics</h4>${list(plan.tokenomics)}</div>
     <div class="card"><h4>Roadmap</h4>${list(plan.roadmap)}</div>
     ${plan.notes ? `<div class="card"><h4>Notes</h4><p>${esc(plan.notes)}</p></div>` : ""}
-    <div class="disclaimer">The plan is written by the agents. The owner approves any real launch. The house earns creator fees and never sells its own coin.</div>`;
+    <div class="disclaimer">The plan is written by the cookers and launches on pump.fun when it is ready. The crew earns creator fees and never sells its own coin.</div>`;
 }
 
 export function updateScreenLogo(renderer, url) {

@@ -1,4 +1,4 @@
-// The six residents of Agent House. Shared by the browser sim and the API prompt.
+// The six cookers. Shared by the browser sim and the API prompt.
 // Appearance fields drive the procedural pixel sprites; the rest drives Claude.
 
 export const AGENTS = [

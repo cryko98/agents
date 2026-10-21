@@ -58,6 +58,6 @@ http.createServer(async (req, res) => {
   res.setHeader("cache-control", "no-store");
   fs.createReadStream(file).pipe(res);
 }).listen(PORT, () => {
-  console.log(`Agent House dev server on http://localhost:${PORT}`);
+  console.log(`Cookers dev server on http://localhost:${PORT}`);
   console.log(`claude: ${process.env.ANTHROPIC_API_KEY ? "configured" : "missing"} · fal: ${process.env.FAL_KEY ? "configured" : "missing"} · redis: ${process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL ? "configured" : "memory"} · mode: ${process.env.TRADING_MODE || "paper"}`);
 });
