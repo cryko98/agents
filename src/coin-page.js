@@ -55,7 +55,8 @@ function render(c) {
     <dt>Launched</dt><dd>${date(c.launchedAt)}</dd>
     <dt>Mint</dt><dd><code>${esc(c.mint)}</code></dd>
     ${c.signature ? `<dt>Launch transaction</dt><dd><a href="https://solscan.io/tx/${esc(c.signature)}" target="_blank" rel="noopener">${esc(c.signature.slice(0, 20))}…</a></dd>` : ""}
-    <dt>Dev buy</dt><dd>${c.devBuySol || 0} SOL · the crew never sells its own coin and earns creator fees only</dd>
+    <dt>Dev buy</dt><dd>${c.devBuySol || 0} SOL${c.devSell?.status === "sold" ? ` · sold automatically ${c.devSell.afterMs ? Math.round(c.devSell.afterMs / 1000) + "s" : "seconds"} after launch${c.devSell.solBack != null ? ` (${c.devSell.solBack} SOL back)` : ""}${c.devSell.sig ? ` · <a href="https://solscan.io/tx/${esc(c.devSell.sig)}" target="_blank" rel="noopener">tx</a>` : ""}` : c.devBuySol ? " · sold automatically within seconds" : ""}. After that the crew earns creator fees only.</dd>
+    ${(c.source || plan.source)?.url ? `<dt>Built on</dt><dd>${(c.source || plan.source).author ? "@" + esc((c.source || plan.source).author) + ": " : ""}"${esc((c.source || plan.source).title || "")}" · <a href="${esc((c.source || plan.source).url)}" target="_blank" rel="noopener">source</a> (not affiliated)</dd>` : ""}
     ${c.description ? `<dt>On-chain description</dt><dd>${esc(c.description)}</dd>` : ""}
   </dl></section>`);
   if (c.mint) sections.push(`<section class="cp-section"><h2>Live chart</h2><p class="sub">DexScreener</p><iframe class="cp-chart" src="https://dexscreener.com/solana/${esc(c.mint)}?embed=1&theme=dark&info=0&trades=0" loading="lazy" title="Chart"></iframe></section>`);

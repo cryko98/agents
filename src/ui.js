@@ -273,7 +273,7 @@ export function renderTreasury(world) {
       <li>Small caps: $15k–$1M market cap, extra safety checks below $100k</li>
       <li>Automatic stop-loss at −30%, take half off at +60%</li>
       <li>Only tokens with real liquidity, at least 3h old, mint &amp; freeze revoked</li>
-      <li>The crew never sells its own coin; it earns creator fees only</li>
+      <li>Every launch: a 0.02 SOL dev buy, sold automatically ~5 seconds later; then creator fees only</li>
       <li>The crew coin launches on pump.fun automatically once the plan is ready</li>
     </ul></div>
     <div class="disclaimer">Nothing here is financial advice. Paper mode uses virtual SOL. The agents can be wrong, and often are.</div>`;
@@ -298,7 +298,7 @@ export function renderCoin(world) {
   const launchCard = {
     none: "", proposed: `<div class="card launch"><h4>Launch</h4><p>🚀 The crew wants to launch <b>${esc(launch.name)}</b> ($${esc(launch.ticker)}) on pump.fun. Waiting for the owner's approval.</p></div>`,
     approved: `<div class="card launch"><h4>Launch</h4><p>🚀 <b>${esc(launch.name)}</b> ($${esc(launch.ticker)}) is launching on pump.fun. Byte is preparing the transaction.</p></div>`,
-    launched: `<div class="card launch"><h4>Launch</h4><p>🟢 <b>${esc(launch.name)}</b> is live: <a href="${esc(launch.url)}" target="_blank" rel="noopener">${esc(launch.url)}</a><br><span class="dim">The crew earns creator fees only and never sells.</span></p></div>`,
+    launched: `<div class="card launch"><h4>Launch</h4><p>🟢 <b>${esc(launch.name)}</b> is live: <a href="${esc(launch.url)}" target="_blank" rel="noopener">${esc(launch.url)}</a><br><span class="dim">The dev buy is sold within seconds; after that the crew earns creator fees only.</span></p></div>`,
     simulated: `<div class="card launch"><h4>Launch</h4><p>🧪 Launch simulated (live launching is off). The coin exists on the whiteboard only.</p></div>`,
     failed: `<div class="card launch"><h4>Launch</h4><p>Launch failed: ${esc(launch.error || "unknown")}</p></div>`,
   }[launch.status] || "";
@@ -306,7 +306,7 @@ export function renderCoin(world) {
   const launched = (world.launches || []).filter((l) => l.status === "launched");
   const launchedCard = launched.length ? `<div class="card launch"><h4>Launched by the crew · ${launched.length} coin${launched.length > 1 ? "s" : ""}</h4>
     <ul class="launched">${launched.map((l) => `<li>${l.logoUrl ? `<img src="${esc(l.logoUrl)}" alt="">` : ""}<div><b>${esc(l.name)}</b> <span class="coin-ticker">$${esc(l.ticker)}</span><br><a href="/coin/${encodeURIComponent(l.ticker)}">birth record</a> · <a href="${esc(l.url)}" target="_blank" rel="noopener">pump.fun</a> · <span class="dim">${new Date(l.launchedAt).toLocaleDateString()}</span></div></li>`).join("")}</ul>
-    <p class="dim">Creator fees collected: <b>${(t.creatorFeesSol || 0).toFixed(4)} SOL</b>${t.pendingCreatorFeesSol ? ` · pending ${t.pendingCreatorFeesSol.toFixed(4)} SOL` : ""} · checked every 10 min. Launched autonomously, never sold.</p></div>` : "";
+    <p class="dim">Creator fees collected: <b>${(t.creatorFeesSol || 0).toFixed(4)} SOL</b>${t.pendingCreatorFeesSol ? ` · pending ${t.pendingCreatorFeesSol.toFixed(4)} SOL` : ""} · checked every 10 min. Launched autonomously; dev buys sold within seconds.</p></div>` : "";
   root.innerHTML = `
     ${launchedCard}
     <div><div class="stage-label">${launched.length ? `Next coin (#${launched.length + 1})` : "Coin plan"} · stage ${idx + 1}/${STAGES.length} · <b>${STAGE_INFO[plan.stage]?.label || plan.stage}</b></div><div class="stages" style="margin-top:6px">${stages}</div></div>
@@ -318,7 +318,9 @@ export function renderCoin(world) {
       </div>
     </div>
     ${launchCard}
+    ${sourceCard(plan.source)}
     ${pollCard(world)}
+    ${radarCard(world.signals)}
     ${researchCard(world.research)}
     <div class="card"><h4>Theme</h4>${plan.theme ? `<p>${esc(plan.theme)}</p>` : `<p class="empty">Still brainstorming.</p>`}</div>
     ${plan.candidates?.length && !plan.name ? `<div class="card"><h4>Candidates</h4>${list(plan.candidates)}</div>` : ""}
@@ -327,7 +329,7 @@ export function renderCoin(world) {
     <div class="card"><h4>Tokenomics</h4>${list(plan.tokenomics)}</div>
     <div class="card"><h4>Roadmap</h4>${list(plan.roadmap)}</div>
     ${plan.notes ? `<div class="card"><h4>Notes</h4><p>${esc(plan.notes)}</p></div>` : ""}
-    <div class="disclaimer">The plan is written by the cookers and launches on pump.fun when it is ready. The crew earns creator fees and never sells its own coin.</div>`;
+    <div class="disclaimer">The plan is written by the cookers and launches on pump.fun when it is ready. Each launch has a small dev buy that is sold automatically within seconds; after that the crew earns creator fees only. Coins inspired by public posts are not affiliated with or endorsed by their authors.</div>`;
 }
 
 // ---------------- holder vote (Phantom) ----------------
@@ -428,6 +430,20 @@ function upgradesCard(world) {
     const have = owned.has(u.id), cur = Math.max(0, m[u.metric] || 0), pct = Math.min(100, Math.round((cur / u.target) * 100));
     return `<li class="${have ? "have" : ""}"><span>${have ? "✅" : "🔒"}</span><div><b>${esc(u.name)}</b><div class="dim">${have ? esc(u.desc) : esc(u.label)}</div>${have ? "" : `<div class="vote-bar"><i style="width:${pct}%"></i></div>`}</div></li>`;
   }).join("")}</ul></div>`;
+}
+
+function sourceCard(src) {
+  if (!src) return "";
+  return `<div class="card"><h4>Built on</h4><p>${src.author ? `<b>@${esc(src.author)}</b> posted: ` : `<b>${esc(src.feed || "News")}</b>: `}"${esc(src.title)}"${src.url ? ` <a href="${esc(src.url)}" target="_blank" rel="noopener">source</a>` : ""}</p></div>`;
+}
+
+function radarCard(sig) {
+  if (!sig?.feed?.length) return "";
+  const ago = (t) => { const m = Math.max(0, Math.round((Date.now() - (t || Date.now())) / 60_000)); return m < 60 ? `${m}m` : `${Math.round(m / 60)}h`; };
+  const rows = sig.feed.slice(0, 8).map((i) => `<li><span class="score s${i.score >= 8 ? "hot" : i.score >= 6 ? "warm" : "cool"}">${i.score}</span> <span class="dim">${esc(i.author ? "@" + i.author : i.feed)} · ${ago(i.at)}</span><br>${i.url ? `<a href="${esc(i.url)}" target="_blank" rel="noopener">${esc(i.title.slice(0, 140))}</a>` : esc(i.title.slice(0, 140))}${i.angle ? `<br><span class="dim">→ ${esc(i.angle)}</span>` : ""}</li>`).join("");
+  return `<div class="card radar"><h4>📡 Juno's news radar${sig.hot ? " · 🔥 flash sprint queued" : ""}</h4>
+    <p class="dim">Live AI, tech and crypto news${sig.x ? ", plus posts from big X accounts" : " and Trump's Truth Social posts"}, scored 0-10 for coin potential. 8+ triggers a flash launch.</p>
+    <ul class="radar-list">${rows}</ul></div>`;
 }
 
 function researchCard(r) {

@@ -312,3 +312,12 @@ a.btn { text-decoration: none; display: inline-block; }
   .brand-sub { display: none; }
   .agent-grid { grid-template-columns: 1fr 1fr 1fr; }
 }
+
+/* news radar */
+.radar-list { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 8px; }
+.radar-list li { font-size: 12px; line-height: 1.35; }
+.radar-list a { color: inherit; }
+.radar .score { display: inline-block; min-width: 20px; text-align: center; border-radius: 4px; font-weight: 700; font-size: 11px; padding: 0 4px; }
+.radar .score.shot { background: #ef4444; color: #fff; }
+.radar .score.swarm { background: #f59e0b; color: #111; }
+.radar .score.scool { background: rgba(148, 163, 184, .25); }

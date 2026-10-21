@@ -26,5 +26,7 @@ jobs:
         run: |
           for i in $(seq 1 18); do
             curl -sS -m 60 -X POST "$SITE/api/scalp" | head -c 300; echo
+            # a full tick every minute so a hot post on the radar becomes a flash sprint quickly
+            if [ $((i % 4)) -eq 0 ]; then curl -sS -m 150 -X POST "$SITE/api/tick${TICK_SECRET:+?secret=$TICK_SECRET}" | head -c 200; echo; fi
             sleep 15
           done

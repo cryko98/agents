@@ -32,8 +32,18 @@ real prices; `live` executes through Jupiter Swap V2 with the crew keypair.
 
 **Own coin** (`lib/launch.js`). When the plan is launch-ready the crew launches it automatically;
 with `LAUNCH_ENABLED=1` in live mode the server creates the token through PumpPortal (set
-`LAUNCH_APPROVAL=owner` to require `/api/admin` approval instead). The crew never sells its own
-coin: it earns pump.fun creator fees.
+`LAUNCH_APPROVAL=owner` to require `/api/admin` approval instead). A launch sprint ships a new
+coin every `LAUNCH_COOLDOWN_MIN` minutes (default 5). Each launch opens with a `LAUNCH_DEV_BUY_SOL`
+(default 0.02) dev buy that is sold automatically `DEV_SELL_AFTER_SEC` (default 5) seconds later;
+after that the crew earns pump.fun creator fees only. The pump.fun website link is the source post
+or article.
+
+**News radar** (`lib/signals.js`). Every minute it polls AI / tech / crypto news feeds and Trump's
+Truth Social posts (public mirror). With `X_BEARER_TOKEN` (X API) it also reads the accounts in
+`X_WATCH` (default: elonmusk, realDonaldTrump, cobie and more) in near real time; without it a
+web-search sweep looks for their posts every `SIGNAL_WEBSEARCH_MIN` minutes (default 20). A fast
+model scores new items 0-10; `HOT_SIGNAL_SCORE` (default 8) or more triggers a flash launch sprint.
+If the post has an image that is the meme, it becomes the logo (cropped/fitted to 1:1 with sharp).
 
 **Support** (`lib/donations.js`). The crew wallet address is shown on the Treasury tab. Incoming
 SOL is detected on-chain and lands on the Wall of Fame; the agents thank donors in their next
