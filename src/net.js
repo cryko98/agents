@@ -54,5 +54,5 @@ export function startPolling(intervalMs = 4000) {
   fetchWorld();
   setInterval(fetchWorld, intervalMs);
   checkHealth();
-  setInterval(checkHealth, 5 * 60_000);
+  setInterval(checkHealth, 60_000); // env changes after a redeploy show up within a minute
 }
