@@ -13,6 +13,23 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Reads the Following timeline of a dedicated X account in a headless Chrome (cookies from the
+  # X_AUTH_TOKEN / X_CT0 secrets) and sends new posts to the news radar every minute.
+  x-watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    env:
+      SITE: https://agent-house-pied.vercel.app
+      TICK_SECRET: ${{ secrets.TICK_SECRET }}
+      X_AUTH_TOKEN: ${{ secrets.X_AUTH_TOKEN }}
+      X_CT0: ${{ secrets.X_CT0 }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install playwright-core (uses the runner's Chrome)
+        run: mkdir -p /tmp/xw && cp scripts/x-watch.mjs /tmp/xw/ && cd /tmp/xw && npm init -y >/dev/null && npm install --no-audit --no-fund playwright-core@1.49.1
+      - name: Watch X for about 4.5 minutes
+        run: node /tmp/xw/x-watch.mjs
+
   tick:
     runs-on: ubuntu-latest
     timeout-minutes: 7
