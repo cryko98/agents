@@ -47,9 +47,10 @@ plus `TICK_SECRET`) and posts new tweets to `/api/signals`. With `X_BEARER_TOKEN
 `X_WATCH` (default: elonmusk, realDonaldTrump, cobie and more) in near real time; without it a
 web-search sweep looks for their posts every `SIGNAL_WEBSEARCH_MIN` minutes (default 20). A fast
 model scores new items 0-10; `HOT_SIGNAL_SCORE` (default 8) or more triggers a flash launch sprint.
-With `NEWS_ONLY` on (the default) the crew launches only coins built on a radar story, and the
-logo is always the story's real photo (feed image, og:image or the same story on Bing News),
-cropped/fitted to 1:1 with sharp; a story without a usable photo is dropped. `NEWS_ONLY=0` brings
+A story desk (web search, every `STORY_HUNT_MIN` minutes, default 30) adds meme-worthy stories
+that need not be fresh. With `NEWS_ONLY` on (the default) the crew launches only coins built on a
+radar story; the logo is the story's real photo (feed image, og:image or the same story on Bing
+News), cropped/fitted to 1:1 with sharp, or a logo Pixel draws for the story when no photo loads. `NEWS_ONLY=0` brings
 back research sprints every few minutes and generated logos.
 
 **Support** (`lib/donations.js`). The crew wallet address is shown on the Treasury tab. Incoming

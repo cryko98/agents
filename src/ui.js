@@ -274,7 +274,7 @@ export function renderTreasury(world) {
       <li>Automatic stop-loss at −30%, take half off at +60%</li>
       <li>Only tokens with real liquidity, at least 3h old, mint &amp; freeze revoked</li>
       <li>Every launch: a 0.2 SOL dev buy, sold automatically ~5 seconds later; then creator fees only</li>
-      <li>Coins launch only from breaking news on Juno's radar, with the story's real photo as the logo</li>
+      <li>Coins launch only from stories on Juno's radar (fresh news or great older stories); the real photo is the logo, or Pixel draws one when there is none</li>
     </ul></div>
     <div class="disclaimer">Nothing here is financial advice. Paper mode uses virtual SOL. The agents can be wrong, and often are.</div>`;
   $("#copy-addr")?.addEventListener("click", () => { navigator.clipboard?.writeText(d.address); $("#copy-addr").textContent = "Copied"; setTimeout(() => { $("#copy-addr").textContent = "Copy"; }, 1500); });
@@ -442,7 +442,7 @@ function radarCard(sig) {
   const ago = (t) => { const m = Math.max(0, Math.round((Date.now() - (t || Date.now())) / 60_000)); return m < 60 ? `${m}m` : `${Math.round(m / 60)}h`; };
   const rows = sig.feed.slice(0, 8).map((i) => `<li><span class="score s${i.score >= 8 ? "hot" : i.score >= 6 ? "warm" : "cool"}">${i.score}</span> <span class="dim">${esc(i.author ? "@" + i.author : i.feed)} · ${ago(i.at)}</span><br>${i.url ? `<a href="${esc(i.url)}" target="_blank" rel="noopener">${esc(i.title.slice(0, 140))}</a>` : esc(i.title.slice(0, 140))}${i.angle ? `<br><span class="dim">→ ${esc(i.angle)}</span>` : ""}</li>`).join("");
   return `<div class="card radar"><h4>📡 Juno's news radar${sig.hot ? " · 🔥 flash sprint queued" : ""}</h4>
-    <p class="dim">Live world headlines, animal &amp; zoo stories, viral news, AI, tech and crypto${sig.x ? ", plus posts from big X accounts" : " and Trump's Truth Social posts"}, scored 0-10 for coin potential. 6+ (with a real photo) triggers a flash launch.${sig.xError ? ` <span class="dim">X watcher: ${esc(sig.xError)}</span>` : ""}</p>
+    <p class="dim">Live world headlines, animal &amp; zoo stories, viral news, AI, tech and crypto${sig.x ? ", plus posts from big X accounts" : " and Trump's Truth Social posts"}, plus a story desk that digs up great older stories every 30 minutes, scored 0-10 for coin potential. 6+ triggers a flash launch.${sig.xError ? ` <span class="dim">X watcher: ${esc(sig.xError)}</span>` : ""}</p>
     <ul class="radar-list">${rows}</ul></div>`;
 }
 
