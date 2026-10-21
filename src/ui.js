@@ -289,8 +289,14 @@ export function renderCoin(world) {
     simulated: `<div class="card launch"><h4>Launch</h4><p>🧪 Launch simulated (live launching is off). The coin exists on the whiteboard only.</p></div>`,
     failed: `<div class="card launch"><h4>Launch</h4><p>Launch failed: ${esc(launch.error || "unknown")}</p></div>`,
   }[launch.status] || "";
+  const t = world.treasury || {};
+  const launched = (world.launches || []).filter((l) => l.status === "launched");
+  const launchedCard = launched.length ? `<div class="card launch"><h4>Launched by the crew · ${launched.length} coin${launched.length > 1 ? "s" : ""}</h4>
+    <ul class="launched">${launched.map((l) => `<li>${l.logoUrl ? `<img src="${esc(l.logoUrl)}" alt="">` : ""}<div><b>${esc(l.name)}</b> <span class="coin-ticker">$${esc(l.ticker)}</span><br><a href="${esc(l.url)}" target="_blank" rel="noopener">pump.fun</a> · <span class="dim">${new Date(l.launchedAt).toLocaleDateString()}</span></div></li>`).join("")}</ul>
+    <p class="dim">Creator fees collected: <b>${(t.creatorFeesSol || 0).toFixed(4)} SOL</b>${t.pendingCreatorFeesSol ? ` · pending ${t.pendingCreatorFeesSol.toFixed(4)} SOL` : ""} · checked every 10 min. Launched autonomously, never sold.</p></div>` : "";
   root.innerHTML = `
-    <div><div class="stage-label">Stage ${idx + 1}/${STAGES.length} · <b>${STAGE_INFO[plan.stage]?.label || plan.stage}</b></div><div class="stages" style="margin-top:6px">${stages}</div></div>
+    ${launchedCard}
+    <div><div class="stage-label">${launched.length ? `Next coin (#${launched.length + 1})` : "Coin plan"} · stage ${idx + 1}/${STAGES.length} · <b>${STAGE_INFO[plan.stage]?.label || plan.stage}</b></div><div class="stages" style="margin-top:6px">${stages}</div></div>
     <div class="coin-hero">
       <div class="coin-logo">${logo}</div>
       <div>

@@ -13,6 +13,16 @@ export default async function handler(req, res) {
   const body = await readBody(req);
   const action = String(body.action || "");
   if (action === "tick") return json(res, 200, await runTick({ force: true }));
+  if (action === "test-logo") {
+    // renders one logo with the configured logo model (costs one image) to check the model + key
+    const { generateLogo, logoPrompt, LOGO_MODEL } = await import("../lib/logo.js");
+    try {
+      const url = await generateLogo(logoPrompt({ name: String(body.name || "Test"), logoPrompt: String(body.prompt || "a cheerful pixel chef hat with a tiny golden coin, memecoin mascot") }));
+      return json(res, 200, { ok: true, model: LOGO_MODEL, url });
+    } catch (err) {
+      return json(res, 200, { ok: false, error: err.message });
+    }
+  }
   if (action === "test-pinata") {
     // uploads a tiny JSON file to check the Pinata key without touching the wallet
     const { pinataUpload } = await import("../lib/launch.js");
