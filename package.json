@@ -14,7 +14,12 @@
     "@upstash/redis": "^1.39.0",
     "bs58": "^6.0.0"
   },
+  "overrides": {
+    "rpc-websockets": {
+      "uuid": "^10.0.0"
+    }
+  },
   "engines": {
-    "node": ">=20"
+    "node": "22.x"
   }
 }

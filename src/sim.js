@@ -98,11 +98,12 @@ export class Sim {
     if (scene && serverNow >= scene.startsAt && serverNow < scene.endsAt) {
       active = scene.lines.find((l) => serverNow >= l.at && serverNow < l.until) || null;
     }
-    const activeId = active ? `${scene.id}:${active.at}` : null;
+    const activeId = active ? active.id : null;
     if (activeId !== this.currentLineId) {
       this.currentLineId = activeId;
       for (const a of this.agents) { a.talking = false; a.bubble = null; }
       if (active) {
+        this.onLine?.(active);
         const a = this.agent(active.speaker);
         if (a) {
           a.talking = true;

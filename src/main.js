@@ -8,6 +8,8 @@ const renderer = new Renderer(canvas);
 const sim = new Sim();
 
 initUI({ sim, renderer, canvas });
+// lines show up in the chat the moment they are spoken; the server archives them later with the same ids
+sim.onLine = (line) => syncTranscript([{ id: line.id, kind: "line", speaker: line.speaker, text: line.text, emotion: line.emotion, t: line.at }]);
 
 let lastPlanKey = null, lastTreasuryKey = null;
 onWorld((world) => {
