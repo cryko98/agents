@@ -3,6 +3,12 @@ import { TW, TH, WALL_H, PART_H, COLS, ROWS, S } from "./config.js";
 import { ROOMS, roomAt, isDoor, FURNITURE, WALL_ITEMS } from "./world.js";
 import { drawCharacter, SPRITE_H } from "./sprites.js";
 
+function glowCircle(ctx, x, y, r) {
+  const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+  g.addColorStop(0, "rgba(250,204,21,0.45)"); g.addColorStop(1, "rgba(250,204,21,0)");
+  ctx.fillStyle = g; ctx.fillRect(x - r, y - r, r * 2, r * 2);
+}
+
 const WALL_N = "#2c3658", WALL_W = "#232c4b", WALL_TOP = "#4a568c", BASE = "#161c33";
 const PART_N = "#3b4672", PART_W = "#303a63", PART_TOP = "#5a67a3";
 
@@ -16,6 +22,7 @@ export class Renderer {
     this.oy = 84;
     this.floorLayer = this.buildFloorLayer();
     this.logoImage = null; // HTMLImageElement shown on the meeting-room screen
+    this.upgrades = new Set(); // office upgrades the crew has unlocked (shared/upgrades.js)
     this.time = 0;
   }
 
@@ -154,7 +161,13 @@ export class Renderer {
     ctx.strokeStyle = BASE; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(T.x, T.y - 1); ctx.lineTo(E.x, E.y - 1); ctx.stroke();
     if (kind === "ext") {
-      for (const item of WALL_ITEMS) if (item.c === c && item.r === r && item.side === side) this.drawWallItem(ctx, item);
+      const neon = this.upgrades.has("neon");
+      for (const item of WALL_ITEMS) {
+        if (item.c !== c || item.r !== r || item.side !== side) continue;
+        if (neon && item.type === "poster" && c === 6 && r === 0) continue; // the neon sign hangs here
+        this.drawWallItem(ctx, item);
+      }
+      if (neon && c === 6 && r === 0 && side === "n") this.drawNeonSign(ctx);
     }
   }
 
@@ -208,6 +221,21 @@ export class Renderer {
     ctx.restore();
   }
 
+  // Pink neon "COOKERS" across the office north wall (tiles c5-c6). Unlocked by the first launch.
+  drawNeonSign(ctx) {
+    const T = this.p(5, 0);
+    ctx.save();
+    ctx.translate(T.x, T.y - WALL_H);
+    ctx.transform(1, 0.5, 0, 1, 0, 0);
+    const flick = Math.sin(this.time / 90) > 0.97 ? 0.4 : 1;
+    ctx.fillStyle = "#12091f"; ctx.fillRect(4, 8, TW - 8, 22);
+    ctx.shadowColor = "#ff4fa3"; ctx.shadowBlur = 12 * flick;
+    ctx.font = "7px 'Press Start 2P', monospace"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillStyle = `rgba(255,170,215,${flick})`; ctx.fillText("COOKERS", TW / 2, 20);
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  }
+
   // ---------- furniture ----------
   drawFurniture(ctx, f) {
     const { c, r, w, d } = f;
@@ -239,7 +267,7 @@ export class Renderer {
         break;
       }
       case "couch": case "armchair": {
-        const col = { top: "#d64545", left: "#8f2626", right: "#b13232" };
+        const col = this.upgrades.has("goldcouch") && f.type === "couch" ? { top: "#facc15", left: "#a16207", right: "#ca8a04" } : { top: "#d64545", left: "#8f2626", right: "#b13232" };
         this.box(ctx, c + 0.05, r + 0.15, w - 0.1, 0.75, 10, col);
         this.box(ctx, c + 0.05, r + 0.1, w - 0.1, 0.18, 24, col);
         this.box(ctx, c + 0.02, r + 0.15, 0.14, 0.75, 16, col);
@@ -269,6 +297,18 @@ export class Renderer {
             const q = this.p(c + dx + 0.15, r + dy + 0.12); ctx.fillStyle = "#f8fafc"; ctx.fillRect(q.x - 6, q.y - 19, 12, 6);
           }
         });
+        if (this.upgrades.has("tradingwall")) {
+          // three chart monitors standing along the back of the table
+          for (const dx of [0.6, 1.6, 2.6]) {
+            this.box(ctx, c + dx, r + 0.2, 0.5, 0.08, 18, { top: "#0f172a", left: "#0f172a", right: "#1e293b" }, 16);
+            this.onLeftFace(ctx, c + dx, r + 0.2, 0.5, 0.08, 18, 16, (len, h) => {
+              ctx.fillStyle = "#04120a"; ctx.fillRect(1, 2, len - 2, h - 4);
+              ctx.strokeStyle = "#4ade80"; ctx.lineWidth = 1.2; ctx.beginPath();
+              for (let i = 0; i <= 6; i++) { const x = 2 + (i * (len - 4)) / 6, y = h - 4 - ((i * 7 + Math.floor(this.time / 600) + dx * 10) % 9) - i; i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+              ctx.stroke();
+            });
+          }
+        }
         break;
       }
       case "fridge":
@@ -330,7 +370,7 @@ export class Renderer {
         break;
       }
       case "arcade": {
-        const col = f.alt ? { top: "#7c3aed", left: "#4c1d95", right: "#6d28d9" } : { top: "#db2777", left: "#831843", right: "#be185d" };
+        const col = f.gold ? { top: "#facc15", left: "#a16207", right: "#ca8a04" } : f.alt ? { top: "#7c3aed", left: "#4c1d95", right: "#6d28d9" } : { top: "#db2777", left: "#831843", right: "#be185d" };
         this.box(ctx, c + 0.15, r + 0.12, 0.7, 0.72, 46, col);
         this.onRightFace(ctx, c + 0.15, r + 0.12, 0.7, 0.72, 46, 0, (len, h) => {
           ctx.fillStyle = "#0b1020"; ctx.fillRect(3, 6, len - 6, 20);
@@ -363,6 +403,16 @@ export class Renderer {
       case "cabinet":
         this.box(ctx, c + 0.1, r + 0.1, 0.8, 0.8, 26, { top: "#94a3b8", left: "#475569", right: "#64748b" });
         this.onLeftFace(ctx, c + 0.1, r + 0.1, 0.8, 0.8, 26, 0, (len, h) => { ctx.fillStyle = "#1e293b"; ctx.fillRect(len / 2 - 4, h / 2 - 1, 8, 2); ctx.fillRect(len / 2 - 4, h / 2 + 7, 8, 2); });
+        if (c === 7 && r === 7 && this.upgrades.has("trophy")) {
+          // gold cup for the first creator fees
+          const q = this.p(c + 0.5, r + 0.5), y = q.y - 26;
+          glowCircle(ctx, q.x, y - 12, 26);
+          ctx.fillStyle = "#a16207"; ctx.fillRect(q.x - 7, y - 4, 14, 4);
+          ctx.fillStyle = "#ca8a04"; ctx.fillRect(q.x - 2, y - 10, 4, 6);
+          ctx.fillStyle = "#facc15"; ctx.fillRect(q.x - 8, y - 22, 16, 12);
+          ctx.fillRect(q.x - 12, y - 20, 4, 6); ctx.fillRect(q.x + 8, y - 20, 4, 6);
+          ctx.fillStyle = "#fef08a"; ctx.fillRect(q.x - 5, y - 20, 3, 8);
+        }
         break;
       case "trash":
         this.box(ctx, c + 0.35, r + 0.35, 0.3, 0.3, 14, { top: "#6b7280", left: "#374151", right: "#4b5563" });
@@ -398,6 +448,7 @@ export class Renderer {
     for (const seg of this.wallSegments()) items.push({ depth: seg.c + seg.r - 0.75, kind: "wall", seg });
     for (const f of FURNITURE) {
       if (f.type === "rug") continue;
+      if (f.upgrade && !this.upgrades.has(f.upgrade)) continue;
       const depth = f.walkable ? f.c + f.r - 0.5 : (f.c + f.w - 1) + (f.r + f.d - 1) + 0.5;
       items.push({ depth, kind: "furn", f });
     }

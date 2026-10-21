@@ -1,0 +1,43 @@
+/* Coin birth record page. Builds on the tokens in styles.css. */
+body.coin-page { overflow: auto; height: auto; min-height: 100vh; }
+.cp-main { max-width: 980px; margin: 0 auto; padding: 28px 16px 80px; display: flex; flex-direction: column; gap: 22px; }
+.cp-hero { display: grid; grid-template-columns: 180px 1fr; gap: 24px; align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 22px; }
+.cp-hero img { width: 180px; height: 180px; border-radius: 22px; object-fit: cover; border: 2px solid var(--accent-2); background: var(--bg-2); }
+.cp-kicker { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; }
+.cp-name { font-family: var(--font-pixel); font-size: 30px; line-height: 1.3; margin: 8px 0 6px; }
+.cp-ticker { color: var(--accent-2); }
+.cp-tagline { font-size: 18px; color: #c7cdf0; }
+.cp-badge { display: inline-flex; gap: 8px; align-items: center; margin-top: 14px; padding: 8px 14px; border-radius: 999px; background: #1d2a1f; border: 1px solid #22c55e66; color: #bbf7d0; font-weight: 700; font-size: 13px; }
+.cp-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+.cp-actions a, .cp-actions button { padding: 10px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel-2); color: var(--text); text-decoration: none; font-weight: 700; font-size: 13px; cursor: pointer; }
+.cp-actions a.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.cp-section { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 20px 22px; }
+.cp-section h2 { margin: 0 0 4px; font-family: var(--font-pixel); font-size: 14px; letter-spacing: .5px; }
+.cp-section .sub { color: var(--muted); font-size: 13px; margin: 0 0 14px; }
+.cp-step { display: flex; gap: 10px; align-items: center; color: var(--accent-2); font-family: var(--font-pixel); font-size: 10px; margin-bottom: 8px; }
+.cp-trends { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
+.cp-trends a { color: var(--accent-2); font-size: 12px; }
+.cp-meeting { border-left: 3px solid var(--accent); padding: 4px 0 4px 14px; margin: 14px 0; }
+.cp-meeting .when { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+.cp-line { display: flex; gap: 10px; margin: 6px 0; align-items: flex-start; }
+.cp-line img { width: 30px; height: 30px; image-rendering: pixelated; border-radius: 8px; background: #0006; border: 1px solid var(--line); flex: 0 0 auto; }
+.cp-line b { font-size: 12px; }
+.cp-line div { font-size: 14px; }
+.cp-vote { display: flex; flex-direction: column; gap: 8px; }
+.cp-vote .opt { display: grid; grid-template-columns: 1fr 90px; gap: 10px; align-items: center; font-size: 14px; }
+.cp-vote .bar { grid-column: 1 / -1; height: 8px; border-radius: 4px; background: var(--bg-2); overflow: hidden; }
+.cp-vote .bar i { display: block; height: 100%; background: var(--accent); }
+.cp-vote .win .bar i { background: var(--ok); }
+.cp-kv { display: grid; grid-template-columns: 160px 1fr; gap: 8px 14px; font-size: 14px; }
+.cp-kv dt { color: var(--muted); }
+.cp-kv dd { margin: 0; word-break: break-word; }
+.cp-kv code { font-size: 12px; }
+.cp-kv a, .cp-section a { color: var(--accent-2); }
+.cp-chart { width: 100%; height: 460px; border: 0; border-radius: 14px; background: var(--bg-2); }
+.cp-foot { text-align: center; color: var(--muted); font-size: 13px; }
+@media (max-width: 700px) {
+  .cp-hero { grid-template-columns: 1fr; text-align: center; }
+  .cp-hero img { margin: 0 auto; }
+  .cp-actions { justify-content: center; }
+  .cp-kv { grid-template-columns: 1fr; }
+}

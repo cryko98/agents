@@ -2,6 +2,8 @@
 import { AGENTS, byId, STAGES, STAGE_INFO } from "../shared/roster.js";
 import { portraitDataURL } from "./sprites.js";
 import { net, sendTip, requestPerk } from "./net.js";
+import { UPGRADES } from "../shared/upgrades.js";
+import { voteMessage } from "../shared/poll.js";
 
 const $ = (sel) => document.querySelector(sel);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
@@ -68,6 +70,7 @@ export function initUI({ sim, renderer, canvas }) {
   const tick = () => { const d = new Date(); $("#clock").textContent = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; };
   tick(); setInterval(tick, 10000);
 
+  $("#coin-lab").addEventListener("click", onCoinLabClick);
   renderTreasury(null);
   renderCoin(null);
 }
@@ -188,7 +191,9 @@ export function openProfile(id) {
   const card = $("#profile-card");
   card.style.setProperty("--c", a.color);
   const skills = Object.entries(a.skills).map(([k, v]) => `<div class="skill"><span>${k}</span><div class="bar"><i data-w="${v}"></i></div><span class="v">${v}</span></div>`).join("");
-  const trades = (net.world?.treasury?.trades || []).filter((t) => t.by === id).length;
+  const lb = net.world?.leaderboard || [];
+  const st = lb.find((r) => r.id === id) || { calls: 0, closed: 0, wins: 0, totalSol: 0 };
+  const rank = lb.findIndex((r) => r.id === id) + 1;
   card.innerHTML = `
     <button class="close" aria-label="Close">×</button>
     <div class="profile-head">
@@ -199,7 +204,12 @@ export function openProfile(id) {
     <div class="profile-section"><h4>Right now</h4><div class="stat-row">
       <div class="stat">Activity<b>${live?.describe() || "—"}</b></div>
       <div class="stat">Mood<b>${live?.mood || "—"}</b></div>
-      <div class="stat">Trades proposed<b>${trades}</b></div>
+    </div></div>
+    <div class="profile-section"><h4>Trading record (paper)</h4><div class="stat-row">
+      <div class="stat">Rank<b>#${rank || "—"} of 6</b></div>
+      <div class="stat">Calls<b>${st.calls}</b></div>
+      <div class="stat">Closed wins<b>${st.wins}/${st.closed}</b></div>
+      <div class="stat">PnL<b class="${st.totalSol >= 0 ? "up" : "down"}">${signed(st.totalSol, 4)} SOL</b></div>
     </div></div>
     <div class="profile-section"><h4>Skills</h4>${skills}</div>
     <div class="profile-section"><h4>Personality</h4><div class="traits">${a.traits.map((t) => `<span>${t}</span>`).join("")}</div></div>
@@ -255,6 +265,7 @@ export function renderTreasury(world) {
         <div class="dim" id="perk-help"></div>
       </form>
     </div>
+    ${upgradesCard(world)}
     <div class="card"><h4>Desk rules</h4><ul class="rules">
       <li>Max 12% of equity per buy, max 20 buys a day, max 10 open positions</li>
       <li>Trading halts for the day after a 20% drawdown</li>
@@ -293,7 +304,7 @@ export function renderCoin(world) {
   const t = world.treasury || {};
   const launched = (world.launches || []).filter((l) => l.status === "launched");
   const launchedCard = launched.length ? `<div class="card launch"><h4>Launched by the crew · ${launched.length} coin${launched.length > 1 ? "s" : ""}</h4>
-    <ul class="launched">${launched.map((l) => `<li>${l.logoUrl ? `<img src="${esc(l.logoUrl)}" alt="">` : ""}<div><b>${esc(l.name)}</b> <span class="coin-ticker">$${esc(l.ticker)}</span><br><a href="${esc(l.url)}" target="_blank" rel="noopener">pump.fun</a> · <span class="dim">${new Date(l.launchedAt).toLocaleDateString()}</span></div></li>`).join("")}</ul>
+    <ul class="launched">${launched.map((l) => `<li>${l.logoUrl ? `<img src="${esc(l.logoUrl)}" alt="">` : ""}<div><b>${esc(l.name)}</b> <span class="coin-ticker">$${esc(l.ticker)}</span><br><a href="/coin/${encodeURIComponent(l.ticker)}">birth record</a> · <a href="${esc(l.url)}" target="_blank" rel="noopener">pump.fun</a> · <span class="dim">${new Date(l.launchedAt).toLocaleDateString()}</span></div></li>`).join("")}</ul>
     <p class="dim">Creator fees collected: <b>${(t.creatorFeesSol || 0).toFixed(4)} SOL</b>${t.pendingCreatorFeesSol ? ` · pending ${t.pendingCreatorFeesSol.toFixed(4)} SOL` : ""} · checked every 10 min. Launched autonomously, never sold.</p></div>` : "";
   root.innerHTML = `
     ${launchedCard}
@@ -306,6 +317,7 @@ export function renderCoin(world) {
       </div>
     </div>
     ${launchCard}
+    ${pollCard(world)}
     ${researchCard(world.research)}
     <div class="card"><h4>Theme</h4>${plan.theme ? `<p>${esc(plan.theme)}</p>` : `<p class="empty">Still brainstorming.</p>`}</div>
     ${plan.candidates?.length && !plan.name ? `<div class="card"><h4>Candidates</h4>${list(plan.candidates)}</div>` : ""}
@@ -315,6 +327,86 @@ export function renderCoin(world) {
     <div class="card"><h4>Roadmap</h4>${list(plan.roadmap)}</div>
     ${plan.notes ? `<div class="card"><h4>Notes</h4><p>${esc(plan.notes)}</p></div>` : ""}
     <div class="disclaimer">The plan is written by the cookers and launches on pump.fun when it is ready. The crew earns creator fees and never sells its own coin.</div>`;
+}
+
+// ---------------- holder vote (Phantom) ----------------
+const vote = { wallet: null, busy: false, msg: "" };
+const phantom = () => (window.phantom?.solana?.isPhantom ? window.phantom.solana : window.solana?.isPhantom ? window.solana : null);
+function votedFor(pollId) { try { return localStorage.getItem(`cookers.vote.${pollId}`); } catch { return null; } }
+
+function pollCard(world) {
+  const poll = world.poll;
+  if (!poll || poll.planId !== world.plan?.id) return "";
+  const open = poll.status === "open";
+  const mine = votedFor(poll.id);
+  const total = (poll.tally || []).reduce((s, t) => s + (t.weight || 0), 0) || 1;
+  const mins = Math.max(0, Math.round((poll.closesAt - (net.world?.serverNow || Date.now())) / 60000));
+  const rows = poll.options.map((o, i) => {
+    const t = poll.tally?.[i] || { votes: 0, weight: 0 };
+    const win = poll.winner === i;
+    return `<div class="vote-opt ${win ? "win" : ""} ${String(i) === mine ? "mine" : ""}">
+      <div class="vote-row"><span>${win ? "🏆 " : ""}${esc(o)}</span>${open ? `<button class="btn" data-vote="${i}" ${vote.busy ? "disabled" : ""}>${String(i) === mine ? "Voted ✓" : "Vote"}</button>` : `<span class="dim">${t.votes} votes</span>`}</div>
+      <div class="vote-bar"><i style="width:${Math.round((t.weight / total) * 100)}%"></i></div>
+      <div class="dim">${t.votes} vote${t.votes === 1 ? "" : "s"} · weight ${t.weight}</div></div>`;
+  }).join("");
+  const wallet = vote.wallet
+    ? `<span class="dim">Wallet ${short(vote.wallet)} connected</span>`
+    : phantom() ? `<button class="btn primary" data-act="connect">Connect Phantom to vote</button>` : `<a class="btn" href="https://phantom.app/" target="_blank" rel="noopener">Install Phantom to vote</a>`;
+  return `<div class="card poll"><h4>🗳️ Holder vote · ${open ? `closes in ${mins} min` : "closed"} · ${poll.voters || 0} voters</h4>
+    <p class="dim">${open ? "Which coin should the crew cook next? One signed vote per wallet; holders of the crew's coins count 3x (10x for 1M+ tokens). Signing is free and sends no transaction." : poll.winner != null ? "Holders picked the winner. The crew builds it." : "No votes, the crew decides."}</p>
+    ${rows}
+    ${open ? `<div class="vote-foot">${wallet}${vote.msg ? `<div class="dim">${esc(vote.msg)}</div>` : ""}</div>` : ""}</div>`;
+}
+
+async function onCoinLabClick(ev) {
+  const btn = ev.target.closest("[data-act], [data-vote]");
+  if (!btn) return;
+  const provider = phantom();
+  if (!provider) return;
+  try {
+    if (!vote.wallet || btn.dataset.act === "connect") {
+      const resp = await provider.connect();
+      vote.wallet = resp.publicKey.toString();
+      vote.msg = "";
+    }
+    if (btn.dataset.vote !== undefined) {
+      const poll = net.world?.poll, option = Number(btn.dataset.vote), ts = Date.now();
+      vote.busy = true; vote.msg = "Sign the vote in Phantom…"; renderCoin(net.world);
+      const signed = await provider.signMessage(new TextEncoder().encode(voteMessage(poll.id, option, vote.wallet, ts)), "utf8");
+      const sig = btoa(String.fromCharCode(...(signed.signature || signed)));
+      const res = await fetch("/api/vote", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ pollId: poll.id, option, address: vote.wallet, signature: sig, ts }) });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `vote failed (${res.status})`);
+      try { localStorage.setItem(`cookers.vote.${poll.id}`, String(option)); } catch { /* private mode */ }
+      vote.msg = `Vote counted with weight ${data.weight}${data.held ? ` (you hold ${Math.round(data.held).toLocaleString()} crew tokens)` : ""}. You can change it until the vote closes.`;
+    }
+  } catch (err) {
+    vote.msg = err?.message || String(err);
+  }
+  vote.busy = false;
+  renderCoin(net.world);
+}
+
+// ---------------- leaderboard & upgrades ----------------
+export function renderLeaderboard(world) {
+  const rows = world?.leaderboard || [];
+  const el = $("#leaderboard");
+  if (!el) return;
+  el.innerHTML = `<div class="card board"><h4>Trader leaderboard · whose calls made money (paper)</h4>
+    ${rows.map((r, i) => `<div class="board-row" data-id="${r.id}">
+      <span class="rank">${i + 1}</span><img src="${portraits[r.id]}" alt=""><span class="nm" style="color:${byId[r.id].color}">${byId[r.id].name}</span>
+      <span class="dim">${r.calls} calls · ${r.wins}/${r.closed} wins</span>
+      <b class="${r.totalSol > 0 ? "up" : r.totalSol < 0 ? "down" : ""}">${signed(r.totalSol, 4)}</b></div>`).join("")}
+    <p class="dim">A sell is credited to whoever opened the position. Open positions count at their current value.</p></div>`;
+  el.querySelectorAll(".board-row").forEach((row) => row.addEventListener("click", () => openProfile(row.dataset.id)));
+}
+
+function upgradesCard(world) {
+  const owned = new Set(world.upgrades || []), m = world.upgradeMetrics || {};
+  return `<div class="card"><h4>Office upgrades · ${owned.size}/${UPGRADES.length}</h4><ul class="upgrades">${UPGRADES.map((u) => {
+    const have = owned.has(u.id), cur = Math.max(0, m[u.metric] || 0), pct = Math.min(100, Math.round((cur / u.target) * 100));
+    return `<li class="${have ? "have" : ""}"><span>${have ? "✅" : "🔒"}</span><div><b>${esc(u.name)}</b><div class="dim">${have ? esc(u.desc) : esc(u.label)}</div>${have ? "" : `<div class="vote-bar"><i style="width:${pct}%"></i></div>`}</div></li>`;
+  }).join("")}</ul></div>`;
 }
 
 function researchCard(r) {

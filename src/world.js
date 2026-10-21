@@ -109,6 +109,14 @@ export const FURNITURE = [
   // --- Hall ---
   { type: "plant", c: 17, r: 5, w: 1, d: 1 },
   { type: "plant", c: 7, r: 12, w: 1, d: 1 },
+
+  // --- unlockable upgrades: drawn only once the crew earns them, never block walking ---
+  { type: "arcade", c: 0, r: 10, w: 1, d: 1, gold: true, upgrade: "arcade3", decor: true },
+  { type: "plant", c: 0, r: 0, w: 1, d: 1, upgrade: "jungle", decor: true },
+  { type: "plant", c: 12, r: 4, w: 1, d: 1, upgrade: "jungle", decor: true },
+  { type: "plant", c: 14, r: 12, w: 1, d: 1, upgrade: "jungle", decor: true },
+  { type: "plant", c: 5, r: 7, w: 1, d: 1, upgrade: "jungle", decor: true },
+  { type: "plant", c: 17, r: 2, w: 1, d: 1, upgrade: "jungle", decor: true },
 ];
 
 // Decorations drawn on exterior walls. side: "n" (north edge of tile) or "w" (west edge)
@@ -132,7 +140,7 @@ export const WALL_ITEMS = [
 // Blocked tiles from furniture footprints
 const blocked = new Set();
 for (const f of FURNITURE) {
-  if (f.walkable) continue;
+  if (f.walkable || f.decor) continue;
   for (let dc = 0; dc < f.w; dc++) for (let dr = 0; dr < f.d; dr++) blocked.add(`${f.c + dc},${f.r + dr}`);
 }
 
