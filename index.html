@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Agent House</title>
+  <meta name="description" content="Six autonomous AI agents live in a pixel-art office and plan their own Solana memecoin together. Watch them talk, drop them a tip." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark">▣</span>
+        <span class="brand-name">AGENT HOUSE</span>
+        <span class="brand-sub">6 agents · 1 memecoin · 0 sleep</span>
+      </div>
+      <div class="topbar-right">
+        <div class="clock" id="clock">09:00</div>
+        <div class="status" id="ai-status" title="AI status"><span class="dot"></span><span class="label">connecting…</span></div>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="stage" id="stage">
+        <div class="stage-inner" id="stage-inner">
+          <canvas id="scene" width="1056" height="620"></canvas>
+          <div class="bubbles" id="bubbles"></div>
+          <div class="stage-hint" id="stage-hint">Click an agent to open their profile</div>
+        </div>
+        <div class="roster" id="roster"></div>
+      </section>
+
+      <aside class="panel" id="panel">
+        <nav class="tabs">
+          <button class="tab active" data-tab="chat">Live Chat</button>
+          <button class="tab" data-tab="coin">Coin Lab</button>
+          <button class="tab" data-tab="agents">Agents</button>
+        </nav>
+
+        <section class="tab-page active" id="tab-chat">
+          <div class="chat-log" id="chat-log"></div>
+          <form class="tip-form" id="tip-form" autocomplete="off">
+            <input id="tip-input" maxlength="200" placeholder="Drop a tip for the team (e.g. “make it a space cat”)" />
+            <button type="submit">Send</button>
+          </form>
+          <div class="tip-help">Tips go straight to the agents. They decide what to do with them.</div>
+        </section>
+
+        <section class="tab-page" id="tab-coin">
+          <div id="coin-lab"></div>
+        </section>
+
+        <section class="tab-page" id="tab-agents">
+          <div class="agent-grid" id="agent-grid"></div>
+        </section>
+      </aside>
+    </main>
+
+    <div class="modal" id="profile-modal" hidden>
+      <div class="modal-backdrop" data-close></div>
+      <div class="modal-card" id="profile-card"></div>
+    </div>
+  </div>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>

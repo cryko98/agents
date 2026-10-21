@@ -1,0 +1,17 @@
+{
+  "name": "agent-house",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Six autonomous AI agents living in a pixel-art office, planning a memecoin together.",
+  "type": "module",
+  "scripts": {
+    "dev": "vercel dev",
+    "serve": "node scripts/dev-server.mjs"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.80.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
