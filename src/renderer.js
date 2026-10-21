@@ -42,9 +42,10 @@ export class Renderer {
     return cv;
   }
 
-  diamond(ctx, c, r, w, d, fill, stroke) {
+  // Flat diamond on the floor, or lifted by z pixels to sit on top of a box.
+  diamond(ctx, c, r, w, d, fill, stroke, z = 0) {
     const T = this.p(c, r), R = this.p(c + w, r), B = this.p(c + w, r + d), L = this.p(c, r + d);
-    ctx.beginPath(); ctx.moveTo(T.x, T.y); ctx.lineTo(R.x, R.y); ctx.lineTo(B.x, B.y); ctx.lineTo(L.x, L.y); ctx.closePath();
+    ctx.beginPath(); ctx.moveTo(T.x, T.y - z); ctx.lineTo(R.x, R.y - z); ctx.lineTo(B.x, B.y - z); ctx.lineTo(L.x, L.y - z); ctx.closePath();
     if (fill) { ctx.fillStyle = fill; ctx.fill(); }
     if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1; ctx.stroke(); }
   }
@@ -223,7 +224,7 @@ export class Renderer {
         this.box(ctx, c + 0.3, r + 0.3, 0.4, 0.12, 2, { top: "#d7dae0", left: "#9aa0ab", right: "#b3b8c2" }, 14);
         this.box(ctx, c + 0.8, r + 0.3, 0.12, 0.12, 5, { top: "#f8fafc", left: "#64748b", right: "#94a3b8" }, 14);
         // paper
-        const q = this.p(c + 0.12, r + 0.55); ctx.fillStyle = "#f8fafc"; ctx.fillRect(q.x - 2, q.y - 16, 10, 6);
+        const q = this.p(c + 0.2, r + 0.65); ctx.fillStyle = "#f8fafc"; ctx.fillRect(q.x - 4, q.y - 17, 10, 5);
         break;
       }
       case "chair": case "stool": {
@@ -265,7 +266,7 @@ export class Renderer {
             this.box(ctx, c + dx, r + dy, 0.32, 0.26, 2, { top: "#cbd5e1", left: "#64748b", right: "#94a3b8" }, 16);
             this.box(ctx, c + dx, r + dy, 0.32, 0.03, 10, { top: "#0f172a", left: "#0f172a", right: "#1e293b" }, 18);
           } else {
-            const q = this.p(c + dx, r + dy); ctx.fillStyle = "#f8fafc"; ctx.fillRect(q.x - 6, q.y - 20, 12, 7);
+            const q = this.p(c + dx + 0.15, r + dy + 0.12); ctx.fillStyle = "#f8fafc"; ctx.fillRect(q.x - 6, q.y - 19, 12, 6);
           }
         });
         break;
@@ -276,7 +277,7 @@ export class Renderer {
         break;
       case "counter": {
         this.box(ctx, c, r, 1, 0.7, 20, { top: "#d9d4c7", left: "#7f6a4e", right: "#9a8260" });
-        if (f.sink) { this.diamond(ctx, c + 0.25, r + 0.15, 0.5, 0.4, "#94a3b8"); const q = this.p(c + 0.5, r + 0.1); ctx.fillStyle = "#64748b"; ctx.fillRect(q.x - 1, q.y - 30, 2, 10); }
+        if (f.sink) { this.diamond(ctx, c + 0.25, r + 0.15, 0.5, 0.4, "#94a3b8", "#64748b", 20); const q = this.p(c + 0.5, r + 0.1); ctx.fillStyle = "#64748b"; ctx.fillRect(q.x - 1, q.y - 30, 2, 10); }
         if (f.coffee) {
           this.box(ctx, c + 0.3, r + 0.2, 0.4, 0.35, 12, dark, 20);
           const q = this.p(c + 0.7, r + 0.55); ctx.fillStyle = "#ef4444"; ctx.fillRect(q.x - 6, q.y - 28, 2, 2);
@@ -342,9 +343,10 @@ export class Renderer {
       }
       case "pool": {
         this.box(ctx, c + 0.05, r + 0.15, w - 0.1, 0.7, 20, { top: "#5a3b22", left: "#3b2414", right: "#4a2e1a" });
-        this.diamond(ctx, c + 0.15, r + 0.25, w - 0.3, 0.5, "#1f8a4c");
-        const pts = this.p(c + 0.15, r + 0.25);
-        void pts;
+        this.diamond(ctx, c + 0.15, r + 0.25, w - 0.3, 0.5, "#1f8a4c", "#14532d", 20);
+        // pockets at the felt corners
+        ctx.fillStyle = "#111";
+        for (const [pc, pr] of [[0.15, 0.25], [w - 0.15, 0.25], [w - 0.15, 0.75], [0.15, 0.75]]) { const q = this.p(c + pc, r + pr); ctx.beginPath(); ctx.arc(q.x, q.y - 20, 2, 0, Math.PI * 2); ctx.fill(); }
         const balls = [[0.5, 0.5, "#fbbf24"], [0.9, 0.4, "#ef4444"], [1.2, 0.55, "#3b82f6"], [0.7, 0.62, "#f8fafc"], [1.5, 0.45, "#111"]];
         for (const [dx, dy, col] of balls) { const q = this.p(c + dx, r + dy); ctx.fillStyle = col; ctx.beginPath(); ctx.arc(q.x, q.y - 20, 2.5, 0, Math.PI * 2); ctx.fill(); }
         break;

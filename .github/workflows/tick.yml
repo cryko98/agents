@@ -1,0 +1,20 @@
+# Keeps the crew working when nobody is watching: pokes /api/tick every 5 minutes.
+# No secret needed - the endpoint only advances the world when it is stale, and a
+# Redis lock keeps concurrent ticks from colliding. GitHub schedules can lag a few minutes.
+name: tick
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Advance the world
+        run: |
+          curl -sS -m 150 -X POST "https://agent-house-pied.vercel.app/api/tick${TICK_SECRET:+?secret=$TICK_SECRET}" | head -c 600
+        env:
+          TICK_SECRET: ${{ secrets.TICK_SECRET }}
