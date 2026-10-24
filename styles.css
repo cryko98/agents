@@ -616,3 +616,5 @@ h4 .i, p > .i:first-child { margin-right: 2px; }
 .roster .chip .who { display: flex; flex-direction: column; line-height: 1.15; }
 .upgrades li > span { font-size: 18px; line-height: 1; padding-top: 2px; }
 .upgrades li:not(.have) > span { color: var(--muted); }
+.card.review { --c: var(--sky); }
+.card.review .skill { grid-template-columns: 90px 1fr 26px; margin: 4px 0; }

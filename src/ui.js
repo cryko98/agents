@@ -126,7 +126,7 @@ const LEAD_ICON = {
   "📈": ["chartUp", "ok"], "📉": ["chartDown", "bad"], "🖼": ["image", "pink"], "📸": ["image", "pink"], "🎨": ["image", "pink"],
   "🗑": ["trash"], "🚀": ["rocket", "pink"], "🧪": ["flask", "sky"], "🔒": ["lock", "gold"], "💸": ["coins", "gold"], "💰": ["coins", "gold"],
   "🗳": ["ballot", "sky"], "🔎": ["search", "sky"], "⚡": ["zap", "gold"], "📡": ["radar", "sky"], "🛠": ["wrench", "gold"], "🛡": ["shield", "warn"],
-  "🛑": ["stop", "bad"], "🤝": ["coins", "gold"], "🎉": ["party", "pink"], "📣": ["megaphone", "gold"], "✅": ["checkCircle", "ok"], "🔁": ["refresh"], "🔄": ["refresh"], "💛": ["heart", "gold"], "🤖": ["robot"], "🟢": ["live", "ok"],
+  "🛑": ["stop", "bad"], "🤝": ["coins", "gold"], "✏": ["wrench", "gold"], "🎉": ["party", "pink"], "📣": ["megaphone", "gold"], "✅": ["checkCircle", "ok"], "🔁": ["refresh"], "🔄": ["refresh"], "💛": ["heart", "gold"], "🤖": ["robot"], "🟢": ["live", "ok"],
 };
 const LEAD_RE = /^\s*(\p{Extended_Pictographic})️?\s*/u;
 function leadIcon(text = "") {
@@ -354,9 +354,22 @@ export function renderCoin(world) {
     <div class="card"><h4>Concept</h4>${plan.concept ? `<p>${esc(plan.concept)}</p>` : `<p class="empty">Not written yet.</p>`}</div>
     <div class="card"><h4>Logo prompt</h4>${plan.logoPrompt ? `<p>${esc(plan.logoPrompt)}</p>` : `<p class="empty">Pixel hasn't briefed the logo yet.</p>`}</div>
     <div class="card"><h4>Tokenomics</h4>${list(plan.tokenomics)}</div>
+    ${reviewCard(plan)}
     <div class="card"><h4>Roadmap</h4>${list(plan.roadmap)}</div>
     ${plan.notes ? `<div class="card"><h4>Notes</h4><p>${esc(plan.notes)}</p></div>` : ""}
     <div class="disclaimer">The plan is written by the cookers and launches on pump.fun when it is ready. Each launch has a dev buy that the crew sells once it is in profit, or after 3 minutes if nobody else buys; it also earns creator fees. Coins inspired by public posts are not affiliated with or endorsed by their authors.</div>`;
+}
+
+/** Sage's launch review of the current plan: the score per criterion and the verdict. */
+function reviewCard(plan) {
+  const r = plan.review;
+  if (!r) return plan.stage === "launch-ready" ? `<div class="card review"><h4>${icon("search", "sky")} Launch review</h4><p class="dim">Sage reviews the coin like a pump.fun trader right before launch. Below 7/10 it doesn't go out.</p></div>` : "";
+  if (r.error) return `<div class="card review"><h4>${icon("search", "sky")} Launch review</h4><p class="dim">Review pending (${esc(r.error.slice(0, 80))}).</p></div>`;
+  const names = { timing: "Timing", searchable: "Searchable", clarity: "Clarity", logo: "Logo", edge: "Edge" };
+  const bars = Object.entries(r.scores || {}).map(([k, v]) => `<div class="skill"><span>${names[k] || k}</span><div class="bar"><i style="width:${Math.max(0, Math.min(10, v)) * 10}%"></i></div><span class="v">${v}</span></div>`).join("");
+  return `<div class="card review"><h4>${icon("search", "sky")} Launch review · ${r.score}/10 ${r.ok ? icon("checkCircle", "ok") : ""}</h4>
+    <div class="skills">${bars}</div><p>${esc(r.reason)}</p>
+    <div class="dim">${r.competitors ? `${r.competitors} similar coin${r.competitors > 1 ? "s" : ""} found on DexScreener · ` : "No similar coin found yet · "}round ${r.round}</div></div>`;
 }
 
 // ---------------- holder vote (Phantom) ----------------
