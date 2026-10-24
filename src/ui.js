@@ -295,8 +295,9 @@ export function renderTreasury(world) {
     </div>
     ${upgradesCard(world)}
     <div class="card"><h4>Desk rules</h4><ul class="rules">
-      <li>Max 12% of equity per buy, max 20 buys a day, max 10 open positions</li>
-      <li>Trading halts for the day after a 20% drawdown</li>
+      <li>Desk: max 6% of equity per buy, max 14 open positions</li>
+      <li>Trading halts for the day after an 8% drawdown; the scalper also pauses after 5 losses in a row</li>
+      <li>Scalps are sized so a stop-out costs about 1% of equity, and never more than 1.5% of the pool</li>
       <li>Small caps: $15k–$1M market cap, extra safety checks below $100k</li>
       <li>Automatic stop-loss at −30%, take half off at +60%</li>
       <li>Only tokens with real liquidity, at least 3h old, mint &amp; freeze revoked</li>
@@ -460,7 +461,7 @@ function scalperCard(world) {
       <div class="stat">Win rate<b>${winRate == null ? "—" : `${winRate}%`}</b></div>
     </div>
     ${by ? `<p class="dim">By setup: ${by}</p>` : ""}
-    <p class="dim">Main setup: coins that migrated off pump.fun (or another launchpad) in the last 4 hours and pull real 5-minute volume with buyers ahead. 15% of equity per trade; half sold at +10%, the rest trails and is fully out by +20%; −10% stop; out after 12 minutes if it goes nowhere. Second setup: strong breakouts on established high-volume coins. Scanned ${s.scanned || 0} hot coins (${s.freshMigrations || 0} fresh migrations)${ago != null ? ` ${ago}s ago` : ""}.</p>
+    <p class="dim">Main setup (rules v2, from a backtest on real candles): coins that migrated off pump.fun in the last 4 hours, skipping the first 10 minutes, with strong 5-minute momentum (+10% to +40%) and real volume. Sized so a stop-out costs ~1% of equity; half sold at +30%, the rest trails 15 points and is out by +100%; −20% stop; out after 30 minutes if it goes nowhere. Paper fills pay pool and Jupiter fees plus price impact. Second setup: strong breakouts on established high-volume coins. Scanned ${s.scanned || 0} hot coins (${s.freshMigrations || 0} fresh migrations)${ago != null ? ` ${ago}s ago` : ""}.</p>
     ${watch ? `<h5 class="sub-h">Breakout watchlist</h5><ul class="watch">${watch}</ul>` : `<p class="dim">No breakout passes the filters right now. Waiting is part of the strategy.</p>`}</div>`;
 }
 
