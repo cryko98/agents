@@ -65,6 +65,7 @@ http.createServer(async (req, res) => {
   let p = decodeURIComponent(url.pathname);
   if (p === "/") p = "/index.html";
   if (/^\/coin\/[^/]+\/?$/.test(p)) p = "/coin.html"; // same rewrite as vercel.json
+  if (p === "/track-record") p = "/record.html";
   const first = p.split("/")[1];
   if (BLOCKED.includes(first)) { res.statusCode = 403; return res.end("forbidden"); }
   const file = path.join(root, p);

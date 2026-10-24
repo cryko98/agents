@@ -266,6 +266,7 @@ export function renderTreasury(world) {
       ${t.halted ? `<div class="halt">${icon("stop", "bad")} ${esc(t.halted.reason)}</div>` : ""}
       ${t.thesis ? `<div class="thesis">“${esc(t.thesis)}”</div>` : ""}
       <div class="dim">${nextDesk != null ? `Next desk session in ~${nextDesk} min` : ""}</div>
+      <a class="btn" href="/track-record">${icon("chartUp")} Launch track record</a>
     </div>
     ${backingCard(world)}
     ${scalperCard(world)}
@@ -330,7 +331,7 @@ export function renderCoin(world) {
   }[launch.status] || "";
   const t = world.treasury || {};
   const launched = (world.launches || []).filter((l) => l.status === "launched");
-  const launchedCard = launched.length ? `<div class="card launch"><h4>Launched by the crew · ${launched.length} coin${launched.length > 1 ? "s" : ""}</h4>
+  const launchedCard = launched.length ? `<div class="card launch"><h4>Launched by the crew · ${launched.length} coin${launched.length > 1 ? "s" : ""} · <a href="/track-record">track record</a></h4>
     <ul class="launched">${launched.map((l) => `<li>${l.logoUrl ? `<img src="${esc(displayUrl(l.logoUrl))}" alt="">` : ""}<div><b>${esc(l.name)}</b> <span class="coin-ticker">$${esc(l.ticker)}</span><br><a href="/coin/${encodeURIComponent(l.ticker)}">birth record</a> · <a href="${esc(l.url)}" target="_blank" rel="noopener">pump.fun</a> · <span class="dim">${new Date(l.launchedAt).toLocaleDateString()}</span></div></li>`).join("")}</ul>
     <p class="dim">Creator fees collected: <b>${(t.creatorFeesSol || 0).toFixed(4)} SOL</b>${t.pendingCreatorFeesSol ? ` · pending ${t.pendingCreatorFeesSol.toFixed(4)} SOL` : ""} · checked every 10 min. Launched autonomously; dev buys sold in profit, or after 3 min with no buyers.</p></div>` : "";
   root.innerHTML = `

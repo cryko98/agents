@@ -1,12 +1,29 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "functions": {
-    "api/*.js": { "maxDuration": 120 }
+    "api/*.js": {
+      "maxDuration": 120
+    }
   },
   "rewrites": [
-    { "source": "/coin/:ticker", "destination": "/coin.html" }
+    {
+      "source": "/coin/:ticker",
+      "destination": "/coin.html"
+    },
+    {
+      "source": "/track-record",
+      "destination": "/record.html"
+    }
   ],
   "headers": [
-    { "source": "/api/(.*)", "headers": [{ "key": "Cache-Control", "value": "no-store" }] }
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    }
   ]
 }
