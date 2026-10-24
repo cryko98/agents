@@ -174,11 +174,14 @@ export class Renderer {
     c.updateProjectionMatrix(); c.updateMatrixWorld();
   }
 
-  setView(view) {
+  setView(view, { auto = false } = {}) {
     if (!VIEWS[view]) return;
     if (this.focus) this.unfocus({ refit: false });
     this.view = view;
-    try { localStorage.setItem("cookers.view", view); } catch { /* private mode */ }
+    if (!auto) {
+      this.autoBack = null; // the viewer picked a room: stay there, even when the gathering ends
+      try { localStorage.setItem("cookers.view", view); } catch { /* private mode */ }
+    }
     for (const b of this.viewButtons || []) b.classList.toggle("active", b.dataset.view === view);
     this.centerViewButton(true);
     this.fitCamera(this.aspect, { instant: false });
@@ -240,6 +243,28 @@ export class Renderer {
     back.querySelector("button").addEventListener("click", () => this.unfocus());
     this.canvas.parentElement.appendChild(back);
     this.focusBar = back;
+  }
+
+  /**
+   * All six cookers in one room (a meeting, the trading desk, a break): the camera goes there by
+   * itself and returns to the previous view when they spread out. The workspace doesn't count:
+   * everyone is there whenever they are simply working at their desks.
+   */
+  followGathering(agents, t) {
+    if (this.focus || agents.length < 2) return;
+    const rooms = new Set(agents.map((a) => roomAt[a.r]?.[a.c] ?? null));
+    const room = rooms.size === 1 ? [...rooms][0] : null;
+    const target = room && room !== "office" && VIEWS[room] ? room : null;
+    if (target !== this.gathering) { this.gathering = target; this.gatheredAt = t; return; }
+    if (t - this.gatheredAt < 1.2) return; // passing through a doorway is not a gathering
+    if (target && this.followedAt !== this.gatheredAt) {
+      this.followedAt = this.gatheredAt;
+      if (this.view !== target) { const back = this.view; this.setView(target, { auto: true }); this.autoBack = back; }
+    } else if (!target && this.autoBack) {
+      const back = this.autoBack;
+      this.autoBack = null;
+      this.setView(back, { auto: true });
+    }
   }
 
   /** On narrow screens the room bar scrolls sideways: keep the active room in the middle of it. */
@@ -644,6 +669,7 @@ export class Renderer {
       if (key !== this.builtUpgrades) this.buildFurniture();
       if (this.logoImage !== this.shownLogo) this.updateScreen();
       for (const a of agents) this.updateAgent(a, dt, t);
+      this.followGathering(agents, t);
       this.updateScreens(agents, t);
       this.animateDecor(t);
       this.easeCamera(dt);
