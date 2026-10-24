@@ -15,10 +15,18 @@ const YAW = { sw: 0, se: Math.PI / 2, ne: Math.PI, nw: -Math.PI / 2 };
 const WALL_H = 1.55, WALL_T = 0.12, PART_H = 0.38, CHAR_SCALE = 1.25, TABLE_Y = 0.52, DESK_Y = 0.5;
 // office chairs (and whoever sits on them) are drawn pulled up towards the desk to their north
 const DESK_PULL = -0.18;
-// camera framings: the whole island, or a close-up of the workspace where every monitor is readable
+// camera framings: the whole island, the workspace (every monitor readable), each room
+const roomBox = (key, pad = 1.08) => {
+  const [c0, c1, r0, r1] = ROOMS[key].rect;
+  return { x0: c0, x1: c1 + 1, z0: r0, z1: r1 + 1, y0: 0, y1: 1.2, pad };
+};
 const VIEWS = {
-  house: { x0: -1.3, x1: COLS + 1.7, z0: -1.3, z1: ROWS + 2.0, y0: -0.9, y1: WALL_H + 0.6, pad: 1.04 },
-  desks: { x0: 0, x1: 8, z0: 0.6, z1: 7.6, y0: 0, y1: 1.3, pad: 1.02 },
+  house: { label: "House", icon: "house", x0: -1.3, x1: COLS + 1.7, z0: -1.3, z1: ROWS + 2.0, y0: -0.9, y1: WALL_H + 0.6, pad: 1.04 },
+  desks: { label: "Workspace", icon: "monitor", x0: 0, x1: 8, z0: 0.6, z1: 7.6, y0: 0, y1: 1.3, pad: 1.02 },
+  lounge: { label: "Lounge", icon: "sofa", ...roomBox("lounge") },
+  kitchen: { label: "Kitchen", icon: "pot", ...roomBox("kitchen") },
+  meeting: { label: "Meeting", icon: "users", ...roomBox("meeting", 1.04) },
+  game: { label: "Game Room", icon: "gamepad", ...roomBox("game") },
 };
 const SCREEN_RES = 2, FOCUS_RES = 5; // desk screens render at 2x the logical size, 5x when the camera is on them
 const ISO_DIR = new THREE.Vector3(1, 1.05, 1).normalize(); // the isometric camera looks along -ISO_DIR
@@ -81,7 +89,7 @@ export class Renderer {
     this.lights();
 
     this.screens = [];
-    try { this.view = localStorage.getItem("cookers.view") === "desks" ? "desks" : "house"; } catch { this.view = "house"; }
+    try { const v = localStorage.getItem("cookers.view"); this.view = VIEWS[v] ? v : "house"; } catch { this.view = "house"; }
     this.buildViewToggle();
 
     this.overlay = document.createElement("div");
@@ -154,6 +162,7 @@ export class Renderer {
   /** Re-aim at the current goal; instant on resize, eased in render() otherwise. */
   fitCamera(aspect, { instant = true } = {}) {
     this.aspect = aspect;
+    if (instant) this.centerViewButton(false);
     this.camGoal = this.goalPose();
     if (instant || !this.camPose) { this.camPose = { ...this.camGoal, pos: this.camGoal.pos.clone(), look: this.camGoal.look.clone() }; this.applyPose(); }
   }
@@ -171,6 +180,7 @@ export class Renderer {
     this.view = view;
     try { localStorage.setItem("cookers.view", view); } catch { /* private mode */ }
     for (const b of this.viewButtons || []) b.classList.toggle("active", b.dataset.view === view);
+    this.centerViewButton(true);
     this.fitCamera(this.aspect, { instant: false });
   }
 
@@ -210,11 +220,11 @@ export class Renderer {
     s.drawnAt = -1;
   }
 
-  /** House / Desks buttons over the scene, and the Back bar shown while a monitor is in focus. */
+  /** One button per room over the scene, and the Back bar shown while a monitor is in focus. */
   buildViewToggle() {
     const bar = document.createElement("div");
     bar.className = "view-toggle";
-    bar.innerHTML = `<button data-view="house">${icon("house")} House</button><button data-view="desks">${icon("monitor")} Desks</button>`;
+    bar.innerHTML = Object.entries(VIEWS).map(([key, v]) => `<button data-view="${key}" title="${v.label}">${icon(v.icon)}<span class="lbl">${v.label}</span></button>`).join("");
     this.canvas.parentElement.appendChild(bar);
     this.viewBar = bar;
     this.viewButtons = [...bar.querySelectorAll("button")];
@@ -222,6 +232,7 @@ export class Renderer {
       b.classList.toggle("active", b.dataset.view === this.view);
       b.addEventListener("click", () => this.setView(b.dataset.view));
     }
+    requestAnimationFrame(() => this.centerViewButton(false));
     const back = document.createElement("div");
     back.className = "view-toggle focus-bar";
     back.hidden = true;
@@ -229,6 +240,14 @@ export class Renderer {
     back.querySelector("button").addEventListener("click", () => this.unfocus());
     this.canvas.parentElement.appendChild(back);
     this.focusBar = back;
+  }
+
+  /** On narrow screens the room bar scrolls sideways: keep the active room in the middle of it. */
+  centerViewButton(smooth) {
+    const bar = this.viewBar, b = bar?.querySelector(".active");
+    if (bar && !bar.hidden) { bar.classList.remove("compact"); bar.classList.toggle("compact", bar.scrollWidth > bar.clientWidth + 1); }
+    if (!b || bar.scrollWidth <= bar.clientWidth) return;
+    bar.scrollTo({ left: b.offsetLeft - (bar.clientWidth - b.offsetWidth) / 2, behavior: smooth ? "smooth" : "auto" });
   }
 
   /** Ease the camera pose towards the goal (view switch, monitor focus). */

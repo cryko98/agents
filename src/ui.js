@@ -113,13 +113,28 @@ function appendMessage(e) {
     el.className = "msg holder";
     el.innerHTML = `<img src="data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><rect width="16" height="16" fill="#2b2355"/><circle cx="8" cy="6" r="3" fill="#ffd166"/><rect x="3" y="10" width="10" height="5" rx="2" fill="#ffd166"/></svg>')}" alt=""><div class="body"><div class="name">Holder tip</div><div class="text">${esc(e.text)}</div></div>`;
   } else if (e.kind === "scene") {
-    el.className = "scene-title"; el.textContent = e.text;
+    el.className = "scene-title"; el.textContent = leadIcon(e.text)[1];
   } else {
     el.className = "msg system";
-    el.innerHTML = `<div class="text">${linkify(esc(e.text))}</div>`;
+    const [ico, text] = leadIcon(e.text);
+    el.innerHTML = `<div class="text">${ico}${ico ? " " : ""}${linkify(esc(text))}</div>`;
   }
   log.appendChild(el);
   while (log.children.length > 260) log.removeChild(log.firstChild);
+}
+// the server starts system lines with an emoji; the chat draws a matching SVG icon instead
+const LEAD_ICON = {
+  "📈": ["chartUp", "ok"], "📉": ["chartDown", "bad"], "🖼": ["image", "pink"], "📸": ["image", "pink"], "🎨": ["image", "pink"],
+  "🗑": ["trash"], "🚀": ["rocket", "pink"], "🧪": ["flask", "sky"], "🔒": ["lock", "gold"], "💸": ["coins", "gold"], "💰": ["coins", "gold"],
+  "🗳": ["ballot", "sky"], "🔎": ["search", "sky"], "⚡": ["zap", "gold"], "📡": ["radar", "sky"], "🛠": ["wrench", "gold"], "🛡": ["shield", "warn"],
+  "🛑": ["stop", "bad"], "✅": ["checkCircle", "ok"], "🔁": ["refresh"], "🔄": ["refresh"], "💛": ["heart", "gold"], "🤖": ["robot"], "🟢": ["live", "ok"],
+};
+const LEAD_RE = /^\s*(\p{Extended_Pictographic})️?\s*/u;
+function leadIcon(text = "") {
+  const m = LEAD_RE.exec(text);
+  if (!m) return ["", text];
+  const [name, cls] = LEAD_ICON[m[1]] || ["spark", "gold"];
+  return [icon(name, cls), text.slice(m[0].length)];
 }
 function linkify(s) { return s.replace(/https?:\/\/[^\s]+/g, (u) => `<a href="${u}" target="_blank" rel="noopener">${u}</a>`); }
 
@@ -165,7 +180,7 @@ export function updateStatus() {
   if (net.error) { label = `world offline: ${net.error}`; el.classList.add("offline"); }
   else if (!net.world) label = "connecting…";
   else if (h?.paused) { label = "AI paused"; el.classList.add("offline"); }
-  else if (h && !h.claude) { label = "canned lines (no Claude key)"; el.classList.add("offline"); }
+  else if (h && !h.claude) { label = "AI offline · agents just work"; el.classList.add("offline"); }
   else if (recentClaudeError()) { label = recentClaudeError(); el.classList.add("offline"); }
   else if (h && !h.redis) { label = "live · memory store (no Redis)"; el.classList.add("busy"); }
   else { label = `live · shared world${h?.model ? " · " + h.model : ""}`; el.classList.add("online"); }
@@ -179,8 +194,8 @@ function recentClaudeError() {
   const ev = events.filter((e) => /scene-fallback|research-error/.test(e.type) && e.t > lastOk && Date.now() + net.offset - e.t < 15 * 60_000).pop();
   if (!ev) return null;
   if (/authentication_error|invalid x-api-key/.test(ev.error || "")) return "Claude key rejected (401) · check ANTHROPIC_API_KEY";
-  if (/rate_limit|429/.test(ev.error || "")) return "Claude rate limited · canned lines for now";
-  if (/credit|billing|402/.test(ev.error || "")) return "Claude credit exhausted · canned lines";
+  if (/rate_limit|429/.test(ev.error || "")) return "Claude rate limited · agents quiet for now";
+  if (/credit|billing|402/.test(ev.error || "")) return "Claude credit exhausted · agents quiet";
   return `Claude call failed · ${String(ev.error || "").slice(0, 60)}`;
 }
 

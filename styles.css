@@ -179,12 +179,16 @@ h4 .i, p > .i:first-child { margin-right: 2px; }
 /* House / Desks toggle and the monitor-focus bar */
 .view-toggle {
   position: absolute; top: 14px; left: 16px; z-index: 2; display: flex; gap: 4px; padding: 4px;
+  max-width: calc(100% - 32px); overflow-x: auto; scrollbar-width: none;
   border-radius: 14px; background: #1a1938e6; box-shadow: inset 0 2px 0 #ffffff12, 0 4px 0 var(--edge);
 }
-.view-toggle button { display: inline-flex; align-items: center; gap: 6px; font: 800 13px var(--font-ui); color: var(--muted); background: transparent; border: 0; padding: 7px 12px; border-radius: 10px; cursor: pointer; }
+.view-toggle::-webkit-scrollbar { display: none; }
+.view-toggle button { flex: 0 0 auto; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; font: 800 13px var(--font-ui); color: var(--muted); background: transparent; border: 0; padding: 7px 12px; border-radius: 10px; cursor: pointer; }
 .view-toggle button.active { background: var(--accent); color: #fff; }
 .view-toggle button:hover:not(.active) { color: var(--text); background: #ffffff0f; }
 .view-toggle[hidden] { display: none; }
+.view-toggle button .i { font-size: 15px; }
+.view-toggle.compact button:not(.active) .lbl { display: none; }
 .focus-bar { align-items: center; }
 .focus-bar span { font-family: var(--font-display); font-size: 15px; letter-spacing: .4px; color: var(--text); padding: 0 12px 0 6px; }
 .monitor-focus .bubbles, .monitor-focus .stage-hint { display: none; }
@@ -489,6 +493,8 @@ h4 .i, p > .i:first-child { margin-right: 2px; }
 }
 @media (max-width: 480px) {
   .clock, .ticker .pnl { display: none; }
+  .view-toggle { top: 10px; left: 10px; max-width: calc(100% - 20px); }
+  .view-toggle button { padding: 7px 9px; }
   .roster .chip .act { display: none; }
   .brand { gap: 8px; }
   .brand-name { font-size: 20px; }
