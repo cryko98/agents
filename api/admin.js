@@ -13,6 +13,12 @@ export default async function handler(req, res) {
   const body = await readBody(req);
   const action = String(body.action || "");
   if (action === "tick") return json(res, 200, await runTick({ force: true }));
+  if (action === "test-logo-photo") {
+    // runs the logo photo search + Claude check for a sample plan (body.plan), nothing is saved
+    const { findLogoPhoto } = await import("../lib/logocheck.js");
+    try { return json(res, 200, { ok: true, ...(await findLogoPhoto(body.plan || {})) }); }
+    catch (err) { return json(res, 200, { ok: false, error: err.message }); }
+  }
   if (action === "test-review") {
     // runs Sage's launch review on a sample plan (body.plan) without touching the world
     const { dryReview } = await import("../lib/review.js");
