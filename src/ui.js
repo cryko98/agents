@@ -62,6 +62,15 @@ export function initUI({ sim, renderer, canvas }) {
     if (owner) return renderer.focusMonitor(owner);
     if (renderer.billboardAt?.(x, y)) openBillboard();
   });
+  // the mouse wheel zooms: up into the room under the cursor, down back out to the whole house
+  let wheelAt = 0;
+  canvas.addEventListener("wheel", (ev) => {
+    ev.preventDefault();
+    if (Math.abs(ev.deltaY) < 4 || performance.now() - wheelAt < 350) return; // one step per flick
+    wheelAt = performance.now();
+    const { x, y } = toCanvas(ev);
+    renderer.wheelZoom?.(x, y, ev.deltaY < 0);
+  }, { passive: false });
   canvas.addEventListener("mousemove", (ev) => { const { x, y } = toCanvas(ev); canvas.classList.toggle("hover", !!renderer.agentAt(x, y, sim.agents) || !!renderer.monitorAt?.(x, y) || !!renderer.billboardAt?.(x, y)); });
 
   $("#profile-modal").addEventListener("click", (ev) => { if (ev.target.dataset.close !== undefined || ev.target.classList.contains("close")) closeProfile(); });

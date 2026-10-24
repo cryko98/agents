@@ -723,6 +723,27 @@ export class Renderer {
     bd.tex.needsUpdate = true;
   }
 
+  /** The room view for the floor under a canvas point ("desks" for the workspace), or null outside. */
+  roomViewAt(x, y) {
+    this.raycaster ||= new THREE.Raycaster();
+    const ndc = new THREE.Vector2((x / this.canvas.width) * 2 - 1, -(y / this.canvas.height) * 2 + 1);
+    this.raycaster.setFromCamera(ndc, this.camera);
+    const hit = this.raycaster.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), new THREE.Vector3());
+    if (!hit) return null;
+    const room = roomAt[Math.floor(hit.z)]?.[Math.floor(hit.x)];
+    const view = room === "office" ? "desks" : room;
+    return VIEWS[view] ? view : null;
+  }
+
+  /** Wheel: up zooms into the room under the cursor, down goes back out (monitor -> room -> house). */
+  wheelZoom(x, y, up) {
+    if (up) {
+      const view = this.roomViewAt(x, y);
+      if (view && view !== this.view) this.setView(view);
+    } else if (this.focus) this.unfocus();
+    else if (this.view !== "house") this.setView("house");
+  }
+
   billboardAt(x, y) {
     if (!this.board) return false;
     this.raycaster ||= new THREE.Raycaster();
