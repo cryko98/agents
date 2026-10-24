@@ -328,3 +328,9 @@ a.btn { text-decoration: none; display: inline-block; }
 .radar .score.shot { background: #ef4444; color: #fff; }
 .radar .score.swarm { background: #f59e0b; color: #111; }
 .radar .score.scool { background: rgba(148, 163, 184, .25); }
+
+/* House / Desks camera toggle over the 3D scene */
+.view-toggle { position: absolute; top: 14px; left: 16px; display: flex; gap: 4px; padding: 3px; border-radius: 10px; background: #0b0e17cc; border: 1px solid var(--line); z-index: 2; }
+.view-toggle button { font: 600 12px var(--font-ui); color: var(--muted); background: transparent; border: 0; padding: 6px 10px; border-radius: 7px; cursor: pointer; }
+.view-toggle button.active { background: var(--accent); color: #fff; }
+.view-toggle button:hover:not(.active) { color: var(--text); }

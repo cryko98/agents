@@ -47,19 +47,20 @@ export function isDoor(c1, r1, c2, r2) {
 // Furniture. Each item: type, c, r, w (tiles along c), d (tiles along r), plus extras.
 // "blocks" = tiles that can't be walked on (defaults to its footprint).
 export const FURNITURE = [
-  // --- Workspace: six desks, chairs north of each (agent faces the viewer) ---
+  // --- Workspace: six desks, chairs south of each: agents sit with their backs to the viewer,
+  // so every monitor faces the camera over their shoulder ---
   { type: "desk", c: 1, r: 2, w: 1, d: 1, owner: "nova" },
   { type: "desk", c: 3, r: 2, w: 1, d: 1, owner: "byte" },
   { type: "desk", c: 5, r: 2, w: 1, d: 1, owner: "pixel" },
   { type: "desk", c: 1, r: 5, w: 1, d: 1, owner: "max" },
   { type: "desk", c: 3, r: 5, w: 1, d: 1, owner: "sage" },
   { type: "desk", c: 5, r: 5, w: 1, d: 1, owner: "juno" },
-  { type: "chair", c: 1, r: 1, w: 1, d: 1, facing: "sw", walkable: true },
-  { type: "chair", c: 3, r: 1, w: 1, d: 1, facing: "sw", walkable: true },
-  { type: "chair", c: 5, r: 1, w: 1, d: 1, facing: "sw", walkable: true },
-  { type: "chair", c: 1, r: 4, w: 1, d: 1, facing: "sw", walkable: true },
-  { type: "chair", c: 3, r: 4, w: 1, d: 1, facing: "sw", walkable: true },
-  { type: "chair", c: 5, r: 4, w: 1, d: 1, facing: "sw", walkable: true },
+  { type: "chair", c: 1, r: 3, w: 1, d: 1, facing: "ne", walkable: true },
+  { type: "chair", c: 3, r: 3, w: 1, d: 1, facing: "ne", walkable: true },
+  { type: "chair", c: 5, r: 3, w: 1, d: 1, facing: "ne", walkable: true },
+  { type: "chair", c: 1, r: 6, w: 1, d: 1, facing: "ne", walkable: true },
+  { type: "chair", c: 3, r: 6, w: 1, d: 1, facing: "ne", walkable: true },
+  { type: "chair", c: 5, r: 6, w: 1, d: 1, facing: "ne", walkable: true },
   { type: "plant", c: 7, r: 0, w: 1, d: 1 },
   { type: "plant", c: 0, r: 7, w: 1, d: 1 },
   { type: "cabinet", c: 7, r: 7, w: 1, d: 1 },
@@ -160,7 +161,7 @@ export function canStep(c1, r1, c2, r2) {
 // Seats: tiles the agents can sit on, keyed by purpose
 export const SEATS = {
   desk: Object.fromEntries(
-    FURNITURE.filter((f) => f.type === "desk").map((f) => [f.owner, { c: f.c, r: f.r - 1, facing: "sw" }])
+    FURNITURE.filter((f) => f.type === "desk").map((f) => [f.owner, { c: f.c, r: f.r + 1, facing: "ne" }])
   ),
   meeting: [
     { c: 10, r: 7, facing: "sw" }, { c: 11, r: 7, facing: "sw" }, { c: 12, r: 7, facing: "sw" },
@@ -189,7 +190,7 @@ export const CHAT_SPOTS = [
   { name: "the arcade", spots: [{ c: 1, r: 9, facing: "nw" }, { c: 1, r: 10, facing: "ne" }] },
   { name: "the kitchen table", spots: [{ c: 14, r: 3, facing: "se", sit: true }, { c: 16, r: 3, facing: "nw", sit: true }] },
   { name: "the whiteboard", spots: [{ c: 14, r: 7, facing: "se" }, { c: 15, r: 7, facing: "nw" }] },
-  { name: "the workspace", spots: [{ c: 2, r: 3, facing: "se" }, { c: 3, r: 3, facing: "nw" }] },
+  { name: "the workspace", spots: [{ c: 2, r: 4, facing: "se" }, { c: 3, r: 4, facing: "nw" }] },
 ];
 
 export function randomWalkable(exclude = new Set()) {
