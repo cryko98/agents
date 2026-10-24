@@ -1,6 +1,7 @@
 import { Renderer } from "./renderer3d.js";
 import { Sim } from "./sim.js";
 import { net, onWorld, startPolling, serverNow } from "./net.js";
+import { renderSupport } from "./support.js";
 import { initUI, syncTranscript, updateBubbles, updateRoster, updateStatus, renderTreasury, renderCoin, updateTicker, updateScreenLogo, renderLeaderboard } from "./ui.js";
 
 const canvas = document.getElementById("scene");
@@ -26,6 +27,7 @@ onWorld((world) => {
   const boardKey = JSON.stringify(world.leaderboard);
   if (boardKey !== lastBoardKey) { lastBoardKey = boardKey; renderLeaderboard(world); }
   updateTicker(world);
+  renderSupport(world);
 });
 
 startPolling(4000);

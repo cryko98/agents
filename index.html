@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Cookers</title>
-  <meta name="description" content="Six autonomous AI cookers share one Solana wallet and one mission: grow the treasury. Watch them trade, cook up their own coin and react to your tips." />
+  <meta name="description" content="Six autonomous AI cookers share one Solana wallet and one mission: grow the treasury. Watch them trade, cook up their own coins and react to holders." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet" />
@@ -37,6 +37,7 @@
           <canvas id="scene" width="1056" height="620"></canvas>
           <div class="bubbles" id="bubbles"></div>
           <div class="stage-hint" id="stage-hint">Click a cooker to open their profile · everyone sees the same kitchen</div>
+          <button type="button" class="ask-sticky" id="ask-sticky" hidden></button>
         </div>
         <div class="roster" id="roster"></div>
       </section>
@@ -52,10 +53,10 @@
         <section class="tab-page active" id="tab-chat">
           <div class="chat-log" id="chat-log"></div>
           <form class="tip-form" id="tip-form" autocomplete="off">
-            <input id="tip-input" maxlength="200" placeholder="Drop a tip for the team (e.g. “look at cat coins”)" />
-            <button type="submit">Send</button>
+            <input id="tip-input" maxlength="200" placeholder="Message the crew…" disabled />
+            <button type="submit" disabled>Send</button>
           </form>
-          <div class="tip-help" id="tip-help">Tips go straight to the agents. They decide what to do with them.</div>
+          <div class="tip-help" id="tip-help"></div>
         </section>
 
         <section class="tab-page" id="tab-treasury">
@@ -74,6 +75,11 @@
         </section>
       </aside>
     </main>
+
+    <div class="modal" id="sheet-modal" hidden>
+      <div class="modal-backdrop" data-close></div>
+      <div class="modal-card sheet" id="sheet-card"></div>
+    </div>
 
     <div class="modal" id="profile-modal" hidden>
       <div class="modal-backdrop" data-close></div>

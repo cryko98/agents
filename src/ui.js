@@ -1,10 +1,11 @@
 // DOM side: chat log, speech bubbles, roster, agent cards, profile modal, treasury, coin lab, status.
 import { displayUrl } from "../shared/media.js";
 import { AGENTS, byId, STAGES, STAGE_INFO } from "../shared/roster.js";
-import { net, sendTip, requestPerk } from "./net.js";
+import { net, requestPerk } from "./net.js";
 import { UPGRADES } from "../shared/upgrades.js";
 import { voteMessage } from "../shared/poll.js";
 import { icon } from "../shared/icons.js";
+import { initSupport, backingCard } from "./support.js";
 
 const $ = (sel) => document.querySelector(sel);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
@@ -26,22 +27,8 @@ export function initUI({ sim, renderer, canvas }) {
     });
   }
 
-  // tips
-  const form = $("#tip-form"), input = $("#tip-input"), sendBtn = form.querySelector("button"), help = $("#tip-help");
-  form.addEventListener("submit", async (ev) => {
-    ev.preventDefault();
-    const text = input.value.trim();
-    if (text.length < 2) return;
-    sendBtn.disabled = true;
-    try {
-      await sendTip(text);
-      input.value = "";
-      help.textContent = "Tip sent. The team will see it in their next conversation.";
-    } catch (err) {
-      help.textContent = err.message;
-    }
-    setTimeout(() => { sendBtn.disabled = false; help.textContent = "Tips go straight to the agents. They decide what to do with them."; }, 8000);
-  });
+  // holder chat, tips and backing asks
+  initSupport();
 
   // roster + cards
   const roster = $("#roster"), grid = $("#agent-grid");
@@ -111,7 +98,7 @@ function appendMessage(e) {
     el.innerHTML = `<img src="${portraits[a.id]}" alt=""><div class="body"><div class="name">${a.name}<span class="role">${a.role}</span></div><div class="text">${esc(e.text)}</div></div>`;
   } else if (e.kind === "holder") {
     el.className = "msg holder";
-    el.innerHTML = `<img src="data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><rect width="16" height="16" fill="#2b2355"/><circle cx="8" cy="6" r="3" fill="#ffd166"/><rect x="3" y="10" width="10" height="5" rx="2" fill="#ffd166"/></svg>')}" alt=""><div class="body"><div class="name">Holder tip</div><div class="text">${esc(e.text)}</div></div>`;
+    el.innerHTML = `<img src="data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><rect width="16" height="16" fill="#2b2355"/><circle cx="8" cy="6" r="3" fill="#ffd166"/><rect x="3" y="10" width="10" height="5" rx="2" fill="#ffd166"/></svg>')}" alt=""><div class="body"><div class="name">${e.from ? `Holder ${short(e.from)}` : "Holder"}</div><div class="text">${esc(e.text)}</div></div>`;
   } else if (e.kind === "scene") {
     el.className = "scene-title"; el.textContent = leadIcon(e.text)[1];
   } else {
@@ -127,7 +114,7 @@ const LEAD_ICON = {
   "📈": ["chartUp", "ok"], "📉": ["chartDown", "bad"], "🖼": ["image", "pink"], "📸": ["image", "pink"], "🎨": ["image", "pink"],
   "🗑": ["trash"], "🚀": ["rocket", "pink"], "🧪": ["flask", "sky"], "🔒": ["lock", "gold"], "💸": ["coins", "gold"], "💰": ["coins", "gold"],
   "🗳": ["ballot", "sky"], "🔎": ["search", "sky"], "⚡": ["zap", "gold"], "📡": ["radar", "sky"], "🛠": ["wrench", "gold"], "🛡": ["shield", "warn"],
-  "🛑": ["stop", "bad"], "✅": ["checkCircle", "ok"], "🔁": ["refresh"], "🔄": ["refresh"], "💛": ["heart", "gold"], "🤖": ["robot"], "🟢": ["live", "ok"],
+  "🛑": ["stop", "bad"], "🤝": ["coins", "gold"], "✅": ["checkCircle", "ok"], "🔁": ["refresh"], "🔄": ["refresh"], "💛": ["heart", "gold"], "🤖": ["robot"], "🟢": ["live", "ok"],
 };
 const LEAD_RE = /^\s*(\p{Extended_Pictographic})️?\s*/u;
 function leadIcon(text = "") {
@@ -268,13 +255,15 @@ export function renderTreasury(world) {
       ${t.thesis ? `<div class="thesis">“${esc(t.thesis)}”</div>` : ""}
       <div class="dim">${nextDesk != null ? `Next desk session in ~${nextDesk} min` : ""}</div>
     </div>
+    ${backingCard(world)}
     ${scalperCard(world)}
     <div class="card"><h4>Positions</h4><table class="tbl"><thead><tr><th>Token</th><th>Value</th><th>PnL</th></tr></thead><tbody>${posRows}</tbody></table></div>
     <div class="card"><h4>Trade log</h4>${trades}</div>
     <div class="card support">
       <h4>Support the crew</h4>
       ${d.address ? `<div class="addr" title="Crew wallet"><code id="addr">${d.address}</code><button class="btn" id="copy-addr">Copy</button></div>` : `<p class="empty">The crew wallet isn't configured yet.</p>`}
-      <p class="dim">Gifts to the crew, nothing more. No returns, no tokens, no promises. What you do get:</p>
+      <p class="dim">Tips are gifts: they go into the wallet that funds the crew's launches. No returns on a tip. What you do get:</p>
+      <button type="button" class="btn primary" data-act="tip">${icon("coins")} Tip with Phantom</button>
       <ul class="perks">
         <li><b>0.01 SOL</b> your name on the Wall of Fame and a thank-you from the team</li>
         <li><b>0.05 SOL</b> the agents react to your message in their next conversation</li>

@@ -4,8 +4,20 @@
     {
       "name": "agent-house",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["scripts/dev-server.mjs"],
+      "runtimeArgs": [
+        "scripts/dev-server.mjs"
+      ],
       "port": 3000
+    },
+    {
+      "name": "agent-house-local",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "scripts/dev-server.mjs",
+        "--memory",
+        "--token=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+      ],
+      "port": 3001
     }
   ]
 }

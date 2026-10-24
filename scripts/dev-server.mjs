@@ -6,7 +6,7 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const PORT = Number(process.env.PORT || 3000);
+const PORT = Number(process.env.PORT || (process.argv.includes("--memory") ? 3001 : 3000));
 
 // .env loader (no dependency). .env.local comes from `vercel env pull`.
 for (const name of [".env", ".env.local"]) {
@@ -17,6 +17,15 @@ for (const name of [".env", ".env.local"]) {
     if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^["']|["']$/g, "");
   }
 }
+
+// --memory: an isolated local world (no Redis, no wallet key, no launches), safe while production runs.
+// --token=<mint>: pretend the project token is live, to try the holder chat.
+if (process.argv.includes("--memory")) {
+  for (const k of ["KV_REST_API_URL", "KV_REST_API_TOKEN", "UPSTASH_REDIS_REST_URL", "UPSTASH_REDIS_REST_TOKEN", "AGENT_WALLET_SECRET", "LAUNCH_ENABLED", "PINATA_JWT"]) delete process.env[k];
+  process.env.SESSION_SECRET ||= "local-dev-only";
+}
+const tokenArg = process.argv.find((a) => a.startsWith("--token="));
+if (tokenArg) process.env.PROJECT_TOKEN_MINT = tokenArg.slice(8);
 
 const MIME = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".mjs": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".json": "application/json", ".ico": "image/x-icon", ".woff2": "font/woff2", ".glb": "model/gltf-binary" };
 const BLOCKED = ["node_modules", ".git", ".env", "api", "lib", "scripts"];

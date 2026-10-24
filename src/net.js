@@ -36,13 +36,6 @@ export async function checkHealth() {
   return net.health;
 }
 
-export async function sendTip(text) {
-  const res = await fetch("/api/tip", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ text }) });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || `tip failed (${res.status})`);
-  return data;
-}
-
 export async function requestPerk(address, request) {
   const res = await fetch("/api/perk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ address, request }) });
   const data = await res.json().catch(() => ({}));
