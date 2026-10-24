@@ -61,11 +61,20 @@ export function initUI({ sim, renderer, canvas }) {
     const rect = canvas.getBoundingClientRect();
     return { x: (ev.clientX - rect.left) * (canvas.width / rect.width), y: (ev.clientY - rect.top) * (canvas.height / rect.height) };
   };
-  canvas.addEventListener("click", (ev) => { const { x, y } = toCanvas(ev); const a = renderer.agentAt(x, y, sim.agents); if (a) openProfile(a.id); });
-  canvas.addEventListener("mousemove", (ev) => { const { x, y } = toCanvas(ev); canvas.classList.toggle("hover", !!renderer.agentAt(x, y, sim.agents)); });
+  // a click on a cooker opens their profile; on a desk monitor, the camera flies to that screen.
+  // While a monitor is in focus, a click on another monitor moves there and anywhere else goes back.
+  canvas.addEventListener("click", (ev) => {
+    const { x, y } = toCanvas(ev);
+    const owner = renderer.monitorAt?.(x, y);
+    if (renderer.focus) return owner && owner !== renderer.focus ? renderer.focusMonitor(owner) : owner ? null : renderer.unfocus();
+    const a = renderer.agentAt(x, y, sim.agents);
+    if (a) return openProfile(a.id);
+    if (owner) renderer.focusMonitor(owner);
+  });
+  canvas.addEventListener("mousemove", (ev) => { const { x, y } = toCanvas(ev); canvas.classList.toggle("hover", !!renderer.agentAt(x, y, sim.agents) || !!renderer.monitorAt?.(x, y)); });
 
   $("#profile-modal").addEventListener("click", (ev) => { if (ev.target.dataset.close !== undefined || ev.target.classList.contains("close")) closeProfile(); });
-  document.addEventListener("keydown", (ev) => { if (ev.key === "Escape") closeProfile(); });
+  document.addEventListener("keydown", (ev) => { if (ev.key === "Escape") { closeProfile(); renderer.unfocus?.(); } });
 
   const tick = () => { const d = new Date(); $("#clock").textContent = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; };
   tick(); setInterval(tick, 10000);

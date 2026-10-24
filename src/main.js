@@ -14,6 +14,7 @@ sim.onLine = (line) => syncTranscript([{ id: line.id, kind: "line", speaker: lin
 let lastPlanKey = null, lastTreasuryKey = null, lastBoardKey = null;
 onWorld((world) => {
   sim.applyWorld(world);
+  renderer.world = world; // desk monitors draw from it
   syncTranscript(world.transcript);
   renderer.upgrades = new Set(world.upgrades || []);
   // the vote countdown changes every minute, so the coin lab re-renders then too

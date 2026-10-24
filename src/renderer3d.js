@@ -6,6 +6,7 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { COLS, ROWS } from "./config.js";
 import { ROOMS, roomAt, FURNITURE, WALL_ITEMS, isDoor } from "./world.js";
+import { drawScreen, SCREEN_W, SCREEN_H } from "./screens.js";
 
 const ASSETS = "/assets/kenney/";
 const CHARACTERS = { nova: "female-e", byte: "male-a", pixel: "female-b", max: "male-d", sage: "male-e", juno: "female-c" };
@@ -18,7 +19,8 @@ const VIEWS = {
   house: { x0: -1.3, x1: COLS + 1.7, z0: -1.3, z1: ROWS + 2.0, y0: -0.9, y1: WALL_H + 0.6, pad: 1.04 },
   desks: { x0: 0, x1: 8, z0: 0.6, z1: 7.6, y0: 0, y1: 1.3, pad: 1.02 },
 };
-const SCREEN_W = 256, SCREEN_H = 160;
+const SCREEN_RES = 2, FOCUS_RES = 5; // desk screens render at 2x the logical size, 5x when the camera is on them
+const ISO_DIR = new THREE.Vector3(1, 1.05, 1).normalize(); // the isometric camera looks along -ISO_DIR
 // the Mini Characters "sit" clip sits on the ground: lift them to the seat of what they sit on
 const SEAT_Y = { chair: 0.3, couch: 0.26, armchair: 0.24, stool: 0.42, beanbag: 0.12 };
 // a few models face -z out of the box; this turns them so "sw" means "front towards +z (the viewer)"
@@ -117,52 +119,127 @@ export class Renderer {
   }
 
   /** Fit the whole house (floor to wall tops) into the view with a small margin. */
-  /** The frustum that fits the current view's box; applied at once, or eased towards in render(). */
-  fitCamera(aspect, { instant = true } = {}) {
-    this.aspect = aspect;
-    const b = VIEWS[this.view] || VIEWS.house;
-    this.camera.updateMatrixWorld();
-    const inv = this.camera.matrixWorldInverse;
+  // ---------- camera: a pose is where it stands, what it looks at, and the frustum ----------
+  /** The isometric pose that fits a view's box (the whole island, or the workspace). */
+  isoPose(view) {
+    const b = VIEWS[view] || VIEWS.house;
+    const look = this.target.clone(), pos = look.clone().addScaledVector(ISO_DIR, 60);
+    const cam = (this.tmpCam ||= new THREE.OrthographicCamera());
+    cam.position.copy(pos); cam.lookAt(look); cam.updateMatrixWorld();
     let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
     for (const x of [b.x0, b.x1]) for (const y of [b.y0, b.y1]) for (const z of [b.z0, b.z1]) {
-      const p = this.v.set(x, y, z).applyMatrix4(inv);
+      const p = this.v.set(x, y, z).applyMatrix4(cam.matrixWorldInverse);
       minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x); minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y);
     }
     let w = (maxX - minX) * b.pad, h = (maxY - minY) * (b.pad + 0.02);
-    if (w / h > aspect) h = w / aspect; else w = h * aspect;
+    if (w / h > this.aspect) h = w / this.aspect; else w = h * this.aspect;
     const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
-    this.camGoal = { left: cx - w / 2, right: cx + w / 2, top: cy + h / 2, bottom: cy - h / 2 };
-    if (instant) { Object.assign(this.camera, this.camGoal); this.camera.updateProjectionMatrix(); }
+    return { pos, look, near: 0.1, left: cx - w / 2, right: cx + w / 2, top: cy + h / 2, bottom: cy - h / 2 };
+  }
+
+  /** Straight in front of a desk monitor, slightly above, the screen filling the view. */
+  focusPose(owner) {
+    const s = this.screens.find((x) => x.owner === owner);
+    if (!s) return null;
+    const look = s.mesh.getWorldPosition(new THREE.Vector3());
+    const pos = look.clone().add(new THREE.Vector3(0, 0.18, 1).normalize().multiplyScalar(6));
+    const hh = Math.max(0.33, 0.43 / this.aspect), hw = hh * this.aspect;
+    // near plane just in front of the screen: desks between the camera and this monitor aren't drawn
+    return { pos, look, near: 5.55, left: -hw, right: hw, top: hh, bottom: -hh };
+  }
+
+  goalPose() { return (this.focus && this.focusPose(this.focus)) || this.isoPose(this.view); }
+
+  /** Re-aim at the current goal; instant on resize, eased in render() otherwise. */
+  fitCamera(aspect, { instant = true } = {}) {
+    this.aspect = aspect;
+    this.camGoal = this.goalPose();
+    if (instant || !this.camPose) { this.camPose = { ...this.camGoal, pos: this.camGoal.pos.clone(), look: this.camGoal.look.clone() }; this.applyPose(); }
+  }
+
+  applyPose() {
+    const p = this.camPose, c = this.camera;
+    c.position.copy(p.pos); c.lookAt(p.look);
+    Object.assign(c, { left: p.left, right: p.right, top: p.top, bottom: p.bottom, near: p.near });
+    c.updateProjectionMatrix(); c.updateMatrixWorld();
   }
 
   setView(view) {
-    if (!VIEWS[view] || view === this.view) return;
+    if (!VIEWS[view]) return;
+    if (this.focus) this.unfocus({ refit: false });
     this.view = view;
     try { localStorage.setItem("cookers.view", view); } catch { /* private mode */ }
     for (const b of this.viewButtons || []) b.classList.toggle("active", b.dataset.view === view);
     this.fitCamera(this.aspect, { instant: false });
   }
 
-  /** House / Desks buttons over the scene. */
+  /** Fly the camera to a desk monitor and read it on the monitor itself. */
+  focusMonitor(owner) {
+    const s = this.screens.find((x) => x.owner === owner);
+    if (!s) return;
+    if (this.focus && this.focus !== owner) this.setScreenRes(this.screens.find((x) => x.owner === this.focus), SCREEN_RES);
+    this.focus = owner;
+    this.setScreenRes(s, FOCUS_RES);
+    this.focusBar.hidden = false; this.viewBar.hidden = true;
+    this.focusBar.querySelector("span").textContent = `${owner[0].toUpperCase()}${owner.slice(1)}'s monitor`;
+    document.body.classList.add("monitor-focus");
+    this.fitCamera(this.aspect, { instant: false });
+  }
+
+  unfocus({ refit = true } = {}) {
+    if (!this.focus) return;
+    this.setScreenRes(this.screens.find((x) => x.owner === this.focus), SCREEN_RES);
+    this.focus = null;
+    this.focusBar.hidden = true; this.viewBar.hidden = false;
+    document.body.classList.remove("monitor-focus");
+    if (refit) this.fitCamera(this.aspect, { instant: false });
+  }
+
+  /** Swap a screen's canvas resolution (sharper when the camera is right on it). */
+  setScreenRes(s, res) {
+    if (!s || s.res === res) return;
+    s.res = res;
+    s.ctx.canvas.width = SCREEN_W * res; s.ctx.canvas.height = SCREEN_H * res;
+    const old = s.tex;
+    s.tex = new THREE.CanvasTexture(s.ctx.canvas);
+    s.tex.colorSpace = THREE.SRGBColorSpace;
+    s.tex.anisotropy = 4;
+    s.mesh.material.map = s.tex; s.mesh.material.needsUpdate = true;
+    old.dispose();
+    s.drawnAt = -1;
+  }
+
+  /** House / Desks buttons over the scene, and the Back bar shown while a monitor is in focus. */
   buildViewToggle() {
     const bar = document.createElement("div");
     bar.className = "view-toggle";
     bar.innerHTML = `<button data-view="house">🏠 House</button><button data-view="desks">💻 Desks</button>`;
     this.canvas.parentElement.appendChild(bar);
+    this.viewBar = bar;
     this.viewButtons = [...bar.querySelectorAll("button")];
     for (const b of this.viewButtons) {
       b.classList.toggle("active", b.dataset.view === this.view);
       b.addEventListener("click", () => this.setView(b.dataset.view));
     }
+    const back = document.createElement("div");
+    back.className = "view-toggle focus-bar";
+    back.hidden = true;
+    back.innerHTML = `<button class="active">← Back</button><span></span>`;
+    back.querySelector("button").addEventListener("click", () => this.unfocus());
+    this.canvas.parentElement.appendChild(back);
+    this.focusBar = back;
   }
 
-  /** Ease the frustum towards the goal set by setView(). */
+  /** Ease the camera pose towards the goal (view switch, monitor focus). */
   easeCamera(dt) {
-    const g = this.camGoal, c = this.camera;
-    if (!g || Math.abs(c.left - g.left) + Math.abs(c.top - g.top) + Math.abs(c.right - g.right) < 1e-4) return;
-    const k = 1 - Math.exp(-dt * 6);
-    for (const key of ["left", "right", "top", "bottom"]) c[key] += (g[key] - c[key]) * k;
-    c.updateProjectionMatrix();
+    const g = this.camGoal, p = this.camPose;
+    if (!g || !p) return;
+    const diff = p.pos.distanceTo(g.pos) + p.look.distanceTo(g.look) + Math.abs(p.near - g.near) + Math.abs(p.left - g.left) + Math.abs(p.top - g.top) + Math.abs(p.right - g.right) + Math.abs(p.bottom - g.bottom);
+    if (diff < 1e-4) return;
+    const k = 1 - Math.exp(-dt * 5);
+    p.pos.lerp(g.pos, k); p.look.lerp(g.look, k);
+    for (const key of ["left", "right", "top", "bottom", "near"]) p[key] += (g[key] - p[key]) * k;
+    this.applyPose();
   }
 
   async load() {
@@ -298,6 +375,7 @@ export class Renderer {
   }
 
   buildFurniture() {
+    if (this.focus) this.unfocus({ refit: false });
     this.furniture?.removeFromParent();
     this.furniture = new THREE.Group();
     this.screens = [];
@@ -413,7 +491,7 @@ export class Renderer {
     g.add(box(0.045, 0.14, 0.035, null, 0, 0.01, -0.02, dark));
     g.add(box(0.68, 0.43, 0.035, null, 0, 0.13, 0, dark));
     const cv = document.createElement("canvas");
-    cv.width = SCREEN_W; cv.height = SCREEN_H;
+    cv.width = SCREEN_W * SCREEN_RES; cv.height = SCREEN_H * SCREEN_RES;
     const tex = new THREE.CanvasTexture(cv);
     tex.colorSpace = THREE.SRGBColorSpace;
     const screen = new THREE.Mesh(new THREE.PlaneGeometry(0.64, 0.4), new THREE.MeshBasicMaterial({ map: tex, toneMapped: false }));
@@ -423,21 +501,35 @@ export class Renderer {
     g.scale.setScalar(1.25); // a touch bigger than life so the screens read from the camera
     g.traverse((m) => { if (m.isMesh && m !== screen) { m.castShadow = true; m.receiveShadow = true; } });
     const seat = { c: f.c, r: f.r + 1 };
-    this.screens.push({ owner: f.owner, seat, ctx: cv.getContext("2d"), tex, drawnAt: -1, active: null });
+    screen.userData.owner = f.owner;
+    this.screens.push({ owner: f.owner, seat, mesh: screen, ctx: cv.getContext("2d"), tex, res: SCREEN_RES, drawnAt: -1, active: null });
     return g;
   }
 
-  /** Redraw desk screens a few times a second: the owner's work when they sit there, a screensaver otherwise. */
+  /** Redraw desk screens twice a second: the owner's real work when they sit there, a screensaver otherwise. */
   updateScreens(agents, t) {
     const byId = Object.fromEntries(agents.map((a) => [a.id, a]));
     for (const s of this.screens) {
       const a = byId[s.owner];
       const active = !!a && a.sitting && !a.path.length && a.c === s.seat.c && a.r === s.seat.r;
-      if (active === s.active && t - s.drawnAt < 0.25) continue;
+      const focused = this.focus === s.owner;
+      if (active === s.active && t - s.drawnAt < (focused ? 0.25 : 0.5)) continue;
       s.active = active; s.drawnAt = t;
-      (active ? SCREEN_DRAW[s.owner] || drawScreensaver : drawScreensaver)(s.ctx, t, a?.def?.color || "#7c5cff");
+      s.ctx.setTransform(s.res, 0, 0, s.res, 0, 0);
+      // in focus the screen always shows the work, even if its owner just stepped away
+      drawScreen(s.owner, s.ctx, t, this.world, { active: active || focused });
       s.tex.needsUpdate = true;
     }
+  }
+
+  /** The desk monitor under a canvas point (canvas pixels), if any: its owner's id. */
+  monitorAt(x, y) {
+    if (!this.screens.length) return null;
+    this.raycaster ||= new THREE.Raycaster();
+    const ndc = new THREE.Vector2((x / this.canvas.width) * 2 - 1, -(y / this.canvas.height) * 2 + 1);
+    this.raycaster.setFromCamera(ndc, this.camera);
+    const hit = this.raycaster.intersectObjects(this.screens.map((s) => s.mesh), false)[0];
+    return hit?.object.userData.owner || null;
   }
 
   // ---------- agents ----------
@@ -497,6 +589,7 @@ export class Renderer {
     if (!v) return;
     const y = this.seatHeight(a);
     v.root.position.set(a.x + 0.5, 0, a.y + 0.5 + this.pull(a));
+    v.root.visible = this.focus !== a.id;
     v.model.position.y = y;
     // turn smoothly towards the facing the simulation wants
     const want = YAW[a.facing] ?? 0;
@@ -576,106 +669,6 @@ export class Renderer {
     }
     return best;
   }
-}
-
-// ---------- desk screen contents (canvas SCREEN_W x SCREEN_H, redrawn ~4x a second) ----------
-// cheap deterministic noise so charts and feeds move smoothly but look the same for everyone
-const noise = (i) => { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
-function screenFrame(ctx, bg, title, color) {
-  ctx.fillStyle = bg; ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
-  ctx.fillStyle = "#00000055"; ctx.fillRect(0, 0, SCREEN_W, 16);
-  ctx.fillStyle = color; ctx.beginPath(); ctx.arc(9, 8, 3.5, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = "#e8ecff"; ctx.font = "bold 10px sans-serif"; ctx.fillText(title, 17, 12);
-}
-const SCREEN_DRAW = {
-  // Byte: a code editor scrolling through Rust
-  byte(ctx, t, color) {
-    screenFrame(ctx, "#1b1d2b", "contract.rs", color);
-    const scroll = Math.floor(t * 3);
-    const cols = ["#c792ea", "#82aaff", "#c3e88d", "#f78c6c", "#89ddff", "#ffcb6b"];
-    for (let i = 0; i < 12; i++) {
-      const n = i + scroll, y = 22 + i * 11.5, indent = (Math.floor(noise(n) * 3)) * 12;
-      ctx.fillStyle = "#4b5072"; ctx.font = "8px monospace"; ctx.fillText(String(n % 300 + 1).padStart(3, " "), 4, y + 7);
-      let x = 26 + indent;
-      for (let k = 0; k < 4; k++) { const w = 10 + noise(n * 7 + k) * 40; ctx.fillStyle = cols[Math.floor(noise(n * 3 + k) * cols.length)]; ctx.fillRect(x, y, w, 6); x += w + 5; if (x > SCREEN_W - 20) break; }
-    }
-    if (Math.floor(t * 2) % 2) { ctx.fillStyle = "#ffffff"; ctx.fillRect(200, 22 + 11 * 11.5, 2, 8); }
-  },
-  // Max: a live candle chart with a price ticker
-  max(ctx, t, color) {
-    screenFrame(ctx, "#0f1420", "SOL / memes · 1m", color);
-    const step = Math.floor(t * 1.5), n = 22, w = (SCREEN_W - 20) / n;
-    let price = 100;
-    const candles = [];
-    for (let i = 0; i < n; i++) { const d = (noise(step + i) - 0.46) * 9; candles.push([price, price + d]); price += d; }
-    const all = candles.flat(), lo = Math.min(...all) - 4, hi = Math.max(...all) + 4;
-    const y = (v) => 24 + (1 - (v - lo) / (hi - lo)) * (SCREEN_H - 34);
-    candles.forEach(([o, c], i) => {
-      const x = 10 + i * w, up = c >= o;
-      ctx.strokeStyle = ctx.fillStyle = up ? "#22c55e" : "#ef4444";
-      ctx.beginPath(); ctx.moveTo(x + w / 2, y(Math.max(o, c) + 2)); ctx.lineTo(x + w / 2, y(Math.min(o, c) - 2)); ctx.stroke();
-      ctx.fillRect(x + 1, Math.min(y(o), y(c)), w - 2, Math.max(2, Math.abs(y(o) - y(c))));
-    });
-    const pct = ((candles[n - 1][1] - candles[0][0]) / candles[0][0]) * 100;
-    ctx.fillStyle = pct >= 0 ? "#22c55e" : "#ef4444"; ctx.font = "bold 13px sans-serif";
-    ctx.fillText(`${pct >= 0 ? "+" : ""}${pct.toFixed(1)}%`, SCREEN_W - 58, 32);
-  },
-  // Pixel: a design tool with a logo on the artboard
-  pixel(ctx, t, color) {
-    screenFrame(ctx, "#2a2d3a", "logo_final_v7.fig", color);
-    ctx.fillStyle = "#1f2130"; ctx.fillRect(0, 16, 22, SCREEN_H - 16);
-    for (let i = 0; i < 6; i++) { ctx.fillStyle = i === Math.floor(t) % 6 ? color : "#4b5072"; ctx.fillRect(5, 24 + i * 18, 12, 12); }
-    ctx.fillStyle = "#f5f3ee"; ctx.fillRect(40, 26, 140, 120);
-    const hue = (t * 40) % 360;
-    ctx.fillStyle = `hsl(${hue},80%,60%)`; ctx.beginPath(); ctx.arc(110, 86, 40, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = "#ffffff"; ctx.font = "bold 30px sans-serif"; ctx.textAlign = "center"; ctx.fillText("$", 110, 97); ctx.textAlign = "left";
-    ctx.strokeStyle = "#38bdf8"; ctx.setLineDash([4, 3]); ctx.strokeRect(68, 44, 84, 84); ctx.setLineDash([]);
-    for (let i = 0; i < 5; i++) { ctx.fillStyle = `hsl(${(hue + i * 60) % 360},75%,58%)`; ctx.fillRect(196, 30 + i * 22, 50, 16); }
-  },
-  // Sage: a spreadsheet with a bar chart
-  sage(ctx, t, color) {
-    screenFrame(ctx, "#f8fafc", "community_metrics.xlsx", color);
-    ctx.strokeStyle = "#dbe1ea"; ctx.lineWidth = 1;
-    for (let r = 0; r < 7; r++) { ctx.beginPath(); ctx.moveTo(0, 30 + r * 16); ctx.lineTo(120, 30 + r * 16); ctx.stroke(); }
-    for (let c = 0; c < 3; c++) { ctx.beginPath(); ctx.moveTo(c * 40, 22); ctx.lineTo(c * 40, 142); ctx.stroke(); }
-    ctx.fillStyle = "#334155"; ctx.font = "9px monospace";
-    const step = Math.floor(t * 0.8);
-    for (let r = 0; r < 7; r++) for (let c = 0; c < 3; c++) ctx.fillText(String(Math.floor(noise(step * 0.1 + r * 3 + c) * 900 + 100)), c * 40 + 6, 41 + r * 16);
-    for (let i = 0; i < 6; i++) {
-      const h = 20 + noise(Math.floor(t * 0.7) + i) * 80;
-      ctx.fillStyle = i % 2 ? "#60a5fa" : "#2563eb"; ctx.fillRect(136 + i * 19, 140 - h, 13, h);
-    }
-  },
-  // Juno: a social feed scrolling by
-  juno(ctx, t, color) {
-    screenFrame(ctx, "#0f1115", "feed · for you", color);
-    const off = (t * 18) % 46;
-    for (let i = -1; i < 4; i++) {
-      const n = i + Math.floor((t * 18) / 46), y = 22 + i * 46 + (46 - off) - 46;
-      ctx.fillStyle = "#1a1d24"; ctx.fillRect(6, y, SCREEN_W - 12, 40);
-      ctx.fillStyle = `hsl(${noise(n) * 360},70%,60%)`; ctx.beginPath(); ctx.arc(20, y + 13, 8, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = "#cbd5e1"; ctx.fillRect(34, y + 8, 50 + noise(n * 2) * 40, 5);
-      ctx.fillStyle = "#64748b"; ctx.fillRect(34, y + 18, 150 + noise(n * 3) * 50, 4); ctx.fillRect(34, y + 26, 90 + noise(n * 5) * 60, 4);
-      ctx.fillStyle = "#f43f5e"; ctx.fillText("♥ " + Math.floor(noise(n * 7) * 990), SCREEN_W - 52, y + 34);
-    }
-    ctx.fillStyle = "#0f1115"; ctx.fillRect(0, 16, SCREEN_W, 4);
-  },
-  // Nova: the roadmap board, a card moving to "done"
-  nova(ctx, t, color) {
-    screenFrame(ctx, "#1e1b2e", "roadmap · next coin", color);
-    const cols = ["TODO", "DOING", "DONE"], cw = (SCREEN_W - 16) / 3;
-    cols.forEach((c, i) => { ctx.fillStyle = "#2a2540"; ctx.fillRect(6 + i * (cw + 2), 22, cw, SCREEN_H - 28); ctx.fillStyle = "#a5b4fc"; ctx.font = "bold 9px sans-serif"; ctx.fillText(c, 12 + i * (cw + 2), 34); });
-    const palette = ["#f472b6", "#fbbf24", "#34d399", "#60a5fa", "#a78bfa"];
-    for (let i = 0; i < 3; i++) for (let k = 0; k < 3 - (i === 1 ? 1 : 0); k++) { ctx.fillStyle = palette[(i * 3 + k) % palette.length]; ctx.fillRect(12 + i * (cw + 2), 42 + k * 26, cw - 12, 18); }
-    const p = (t * 0.25) % 1, x = 12 + p * 2 * (cw + 2);
-    ctx.fillStyle = "#ffffff"; ctx.fillRect(x, 120, cw - 12, 18);
-    ctx.fillStyle = color; ctx.fillRect(x, 120, 4, 18);
-  },
-};
-function drawScreensaver(ctx, t, color) {
-  ctx.fillStyle = "#0b0e17"; ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
-  const x = 60 + Math.sin(t * 0.6) * 50, y = 70 + Math.cos(t * 0.45) * 30;
-  ctx.fillStyle = color; ctx.globalAlpha = 0.85; ctx.font = "bold 18px sans-serif"; ctx.fillText("COOKERS", x, y); ctx.globalAlpha = 1;
 }
 
 // ---------- building blocks ----------

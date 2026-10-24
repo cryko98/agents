@@ -334,3 +334,9 @@ a.btn { text-decoration: none; display: inline-block; }
 .view-toggle button { font: 600 12px var(--font-ui); color: var(--muted); background: transparent; border: 0; padding: 6px 10px; border-radius: 7px; cursor: pointer; }
 .view-toggle button.active { background: var(--accent); color: #fff; }
 .view-toggle button:hover:not(.active) { color: var(--text); }
+
+/* monitor focus: the camera is on a desk screen */
+.focus-bar { align-items: center; }
+.focus-bar span { font: 600 12px var(--font-ui); color: var(--text); padding: 0 10px 0 4px; }
+.view-toggle[hidden] { display: none; }
+.monitor-focus .bubbles, .monitor-focus .stage-hint { display: none; }
