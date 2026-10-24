@@ -211,7 +211,7 @@ const SCREENS = {
     if (p.concept) y = wrap(ctx, p.concept, 8, y + 2, SCREEN_W - 16, 10, 4, { size: 8, color: "#d1d5db" });
     if (p.source?.title) wrap(ctx, `built on: ${p.source.author ? "@" + p.source.author + " · " : ""}${p.source.title}`, 8, Math.max(y + 4, 140), SCREEN_W - 16, 10, 2, { size: 7.5, color: "#94a3b8" });
     const hot = w.signals?.hot;
-    if (hot) wrap(ctx, `⚡ flash sprint queued: ${hot.title}`, 8, 168, SCREEN_W - 16, 10, 1, { size: 8, color: "#fbbf24", weight: "600" });
+    if (hot) wrap(ctx, `» flash sprint queued: ${hot.title}`, 8, 168, SCREEN_W - 16, 10, 1, { size: 8, color: "#fbbf24", weight: "600" });
     text(ctx, `${launched.length} coin${launched.length === 1 ? "" : "s"} launched${launched[0] ? ` · last $${launched[0].ticker} ${ago(launched[0].launchedAt)} ago` : ""}`, 8, SCREEN_H - 7, { size: 7.5, color: "#8b86a8" });
   },
 
@@ -253,10 +253,10 @@ const SCREENS = {
       ctx.fillStyle = `hsl(${hue(it.author || it.feed)},65%,55%)`; ctx.beginPath(); ctx.arc(14, y + 11, 7, 0, Math.PI * 2); ctx.fill();
       text(ctx, (it.author || it.feed || "?").slice(0, 1).toUpperCase(), 14, y + 14, { size: 8, weight: "800", color: "#000", align: "center" });
       text(ctx, it.author ? `@${it.author}` : it.feed, 26, y + 9, { size: 8, weight: "700", color: "#e7e9ea", max: 140 });
-      text(ctx, `· ${ago(it.at)}${it.pinned ? " · 📌" : ""}`, 26 + Math.min(140, ctx.measureText(it.author ? `@${it.author}` : it.feed).width) + 4, y + 9, { size: 7.5, color: "#71767b" });
+      text(ctx, `· ${ago(it.at)}${it.pinned ? " · pinned" : ""}`, 26 + Math.min(140, ctx.measureText(it.author ? `@${it.author}` : it.feed).width) + 4, y + 9, { size: 7.5, color: "#71767b" });
       const s = it.score ?? 0;
       ctx.fillStyle = s >= 8 ? "#f4212e" : s >= 6 ? "#ffad1f" : "#2f3336"; ctx.fillRect(SCREEN_W - 40, y + 2, 34, 11);
-      text(ctx, `🔥 ${s}/10`, SCREEN_W - 23, y + 10, { size: 7, weight: "700", color: "#fff", align: "center" });
+      text(ctx, `${s}/10`, SCREEN_W - 23, y + 10, { size: 7, weight: "700", color: "#fff", align: "center" });
       wrap(ctx, it.title, 26, y + 20, SCREEN_W - 34, 9, 2, { size: 7.5, color: "#d6d9db" });
       if (it.angle) text(ctx, `→ ${it.angle}`, 26, y + 39, { size: 7, color: "#1d9bf0", max: SCREEN_W - 34 });
     });

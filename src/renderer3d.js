@@ -7,6 +7,7 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { COLS, ROWS } from "./config.js";
 import { ROOMS, roomAt, FURNITURE, WALL_ITEMS, isDoor } from "./world.js";
 import { drawScreen, SCREEN_W, SCREEN_H } from "./screens.js";
+import { icon } from "../shared/icons.js";
 
 const ASSETS = "/assets/kenney/";
 const CHARACTERS = { nova: "female-e", byte: "male-a", pixel: "female-b", max: "male-d", sage: "male-e", juno: "female-c" };
@@ -213,7 +214,7 @@ export class Renderer {
   buildViewToggle() {
     const bar = document.createElement("div");
     bar.className = "view-toggle";
-    bar.innerHTML = `<button data-view="house">🏠 House</button><button data-view="desks">💻 Desks</button>`;
+    bar.innerHTML = `<button data-view="house">${icon("house")} House</button><button data-view="desks">${icon("monitor")} Desks</button>`;
     this.canvas.parentElement.appendChild(bar);
     this.viewBar = bar;
     this.viewButtons = [...bar.querySelectorAll("button")];
@@ -224,7 +225,7 @@ export class Renderer {
     const back = document.createElement("div");
     back.className = "view-toggle focus-bar";
     back.hidden = true;
-    back.innerHTML = `<button class="active">← Back</button><span></span>`;
+    back.innerHTML = `<button class="active">${icon("back")} Back</button><span></span>`;
     back.querySelector("button").addEventListener("click", () => this.unfocus());
     this.canvas.parentElement.appendChild(back);
     this.focusBar = back;
@@ -255,6 +256,7 @@ export class Renderer {
     const chars = {};
     for (const [id, file] of Object.entries(CHARACTERS)) jobs.push(loader.loadAsync(`${ASSETS}characters/character-${file}.glb`).then((g) => { chars[id] = g; }));
     await Promise.all(jobs);
+    await document.fonts?.ready; // neon signs and the meeting screen are drawn with the page font
     this.chars = chars;
     this.buildGarden();
     this.buildHouse();
@@ -782,7 +784,7 @@ function shade(hex, amt) {
 function neonSign(text, x, y, z, side, color, glow, size = 1.4) {
   const tex = canvasTexture(512, 128, (ctx, w, h) => {
     ctx.clearRect(0, 0, w, h);
-    ctx.font = "bold 78px 'Press Start 2P', Impact, sans-serif";
+    ctx.font = "bold 78px 'Lilita One', Impact, sans-serif";
     ctx.textAlign = "center"; ctx.textBaseline = "middle";
     ctx.shadowColor = glow; ctx.shadowBlur = 24;
     ctx.fillStyle = color; ctx.fillText(text, w / 2, h / 2 + 4);
@@ -832,7 +834,7 @@ function bigScreen(f, renderer) {
   renderer.idleScreen = canvasTexture(512, 288, (ctx, w, h) => {
     const grd = ctx.createLinearGradient(0, 0, w, h); grd.addColorStop(0, "#1b1f4a"); grd.addColorStop(1, "#4c1d95");
     ctx.fillStyle = grd; ctx.fillRect(0, 0, w, h);
-    ctx.fillStyle = "#ffd166"; ctx.font = "bold 44px 'Press Start 2P', Impact, sans-serif"; ctx.textAlign = "center"; ctx.fillText("COOKERS", w / 2, h / 2);
+    ctx.fillStyle = "#ffd166"; ctx.font = "bold 44px 'Lilita One', Impact, sans-serif"; ctx.textAlign = "center"; ctx.fillText("COOKERS", w / 2, h / 2);
     ctx.fillStyle = "#a5b4fc"; ctx.font = "20px sans-serif"; ctx.fillText("next coin cooking…", w / 2, h / 2 + 44);
   });
   renderer.screenMat = new THREE.MeshBasicMaterial({ map: renderer.idleScreen, toneMapped: false });

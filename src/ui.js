@@ -4,6 +4,7 @@ import { AGENTS, byId, STAGES, STAGE_INFO } from "../shared/roster.js";
 import { net, sendTip, requestPerk } from "./net.js";
 import { UPGRADES } from "../shared/upgrades.js";
 import { voteMessage } from "../shared/poll.js";
+import { icon } from "../shared/icons.js";
 
 const $ = (sel) => document.querySelector(sel);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
@@ -47,7 +48,7 @@ export function initUI({ sim, renderer, canvas }) {
   for (const a of AGENTS) {
     const chip = document.createElement("button");
     chip.className = "chip"; chip.style.setProperty("--c", a.color); chip.dataset.id = a.id;
-    chip.innerHTML = `<img src="${portraits[a.id]}" alt=""><span><b>${a.name}</b> <span class="act"></span></span>`;
+    chip.innerHTML = `<img src="${portraits[a.id]}" alt=""><span class="who"><b>${a.name}</b><span class="act"></span></span>`;
     chip.addEventListener("click", () => openProfile(a.id));
     roster.appendChild(chip);
     const card = document.createElement("div");
@@ -235,9 +236,9 @@ export function renderTreasury(world) {
   const t = world.treasury, d = world.donations, perks = world.perks;
   const positions = Object.entries(t.positions || {});
   const posRows = positions.length
-    ? positions.map(([mint, p]) => `<tr><td><b>${p.strategy === "scalp" ? "⚡ " : ""}${esc(p.symbol)}</b><br><span class="dim">${short(mint)}${p.strategy === "scalp" ? " · scalp" : ""}</span></td><td>${sol(p.valueSol)}</td><td class="${p.pnlSol >= 0 ? "up" : "down"}">${signed(p.pnlSol)}${p.costSol ? `<br><span class="dim">${signed(((p.valueSol - p.costSol) / p.costSol) * 100, 1)}%</span>` : ""}</td></tr>`).join("")
+    ? positions.map(([mint, p]) => `<tr><td><b>${p.strategy === "scalp" ? icon("zap", "gold") : ""}${esc(p.symbol)}</b><br><span class="dim">${short(mint)}${p.strategy === "scalp" ? " · scalp" : ""}</span></td><td>${sol(p.valueSol)}</td><td class="${p.pnlSol >= 0 ? "up" : "down"}">${signed(p.pnlSol)}${p.costSol ? `<br><span class="dim">${signed(((p.valueSol - p.costSol) / p.costSol) * 100, 1)}%</span>` : ""}</td></tr>`).join("")
     : `<tr><td colspan="3" class="empty">No open positions. The desk is holding cash.</td></tr>`;
-  const trades = (t.trades || []).slice(0, 12).map((tr) => `<div class="trade ${tr.side}"><span class="side">${tr.side === "buy" ? "BUY" : "SELL"}</span><span class="sym">${/^Scalp/.test(tr.reason || "") ? "⚡ " : ""}${esc(tr.symbol)}${tr.realized != null ? ` <span class="${tr.realized >= 0 ? "up" : "down"}">${signed(tr.realized, 4)}</span>` : ""}</span><span class="amt">${tr.sol} SOL</span><span class="who">${byId[tr.by]?.name || ""}</span><div class="why">${esc(tr.reason)}${tr.sig ? ` · <a href="https://solscan.io/tx/${tr.sig}" target="_blank" rel="noopener">tx</a>` : ""}</div></div>`).join("") || `<p class="empty">No trades yet. The desk meets every 5 minutes.</p>`;
+  const trades = (t.trades || []).slice(0, 12).map((tr) => `<div class="trade ${tr.side}"><span class="side">${tr.side === "buy" ? "BUY" : "SELL"}</span><span class="sym">${/^Scalp/.test(tr.reason || "") ? icon("zap", "gold") : ""}${esc(tr.symbol)}${tr.realized != null ? ` <span class="${tr.realized >= 0 ? "up" : "down"}">${signed(tr.realized, 4)}</span>` : ""}</span><span class="amt">${tr.sol} SOL</span><span class="who">${byId[tr.by]?.name || ""}</span><div class="why">${esc(tr.reason)}${tr.sig ? ` · <a href="https://solscan.io/tx/${tr.sig}" target="_blank" rel="noopener">tx</a>` : ""}</div></div>`).join("") || `<p class="empty">No trades yet. The desk meets every 5 minutes.</p>`;
   const wall = (d.wall || []).slice(0, 12).map((w) => `<li><span>${short(w.from)}</span><b>${w.sol} SOL</b></li>`).join("") || `<li class="empty">Be the first name on the wall.</li>`;
   const gallery = (perks.gallery || []).slice(0, 8).map((g) => `<a class="art" href="${esc(g.url)}" target="_blank" rel="noopener" title="${esc(g.request)}"><img src="${esc(g.url)}" alt="" loading="lazy"></a>`).join("");
   const nextDesk = t.nextDeskAt ? Math.max(0, Math.round((t.nextDeskAt - (net.world?.serverNow || Date.now())) / 60000)) : null;
@@ -248,7 +249,7 @@ export function renderTreasury(world) {
       <div class="big">${sol(t.equitySol)}</div>
       <div class="${t.pnlSol >= 0 ? "up" : "down"}">${signed(t.pnlSol)} SOL (${signed(t.pnlPct, 1)}%) since start · cash ${sol(cash)}${t.solUsd ? ` · SOL $${Number(t.solUsd).toFixed(0)}` : ""}</div>
       ${t.mode === "paper" && t.realSol != null ? `<div class="dim">Real wallet: ${sol(t.realSol, 4)} (used for the coin launch and gifts)</div>` : ""}
-      ${t.halted ? `<div class="halt">🛑 ${esc(t.halted.reason)}</div>` : ""}
+      ${t.halted ? `<div class="halt">${icon("stop", "bad")} ${esc(t.halted.reason)}</div>` : ""}
       ${t.thesis ? `<div class="thesis">“${esc(t.thesis)}”</div>` : ""}
       <div class="dim">${nextDesk != null ? `Next desk session in ~${nextDesk} min` : ""}</div>
     </div>
@@ -305,10 +306,10 @@ export function renderCoin(world) {
   const logo = plan.logoUrl ? `<img src="${esc(displayUrl(plan.logoUrl))}" alt="logo">` : `<span class="ph">${esc((plan.ticker || "??").slice(0, 2))}</span>`;
   const list = (arr) => arr?.length ? `<ul>${arr.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>` : `<p class="empty">Not decided yet.</p>`;
   const launchCard = {
-    none: "", proposed: `<div class="card launch"><h4>Launch</h4><p>🚀 The crew wants to launch <b>${esc(launch.name)}</b> ($${esc(launch.ticker)}) on pump.fun. Waiting for the owner's approval.</p></div>`,
-    approved: `<div class="card launch"><h4>Launch</h4><p>🚀 <b>${esc(launch.name)}</b> ($${esc(launch.ticker)}) is launching on pump.fun. Byte is preparing the transaction.</p></div>`,
-    launched: `<div class="card launch"><h4>Launch</h4><p>🟢 <b>${esc(launch.name)}</b> is live: <a href="${esc(launch.url)}" target="_blank" rel="noopener">${esc(launch.url)}</a><br><span class="dim">The dev buy is sold once it is in profit, or after 3 minutes if nobody else buys; the crew also earns creator fees.</span></p></div>`,
-    simulated: `<div class="card launch"><h4>Launch</h4><p>🧪 Launch simulated (live launching is off). The coin exists on the whiteboard only.</p></div>`,
+    none: "", proposed: `<div class="card launch"><h4>Launch</h4><p>${icon("rocket", "pink")} The crew wants to launch <b>${esc(launch.name)}</b> ($${esc(launch.ticker)}) on pump.fun. Waiting for the owner's approval.</p></div>`,
+    approved: `<div class="card launch"><h4>Launch</h4><p>${icon("rocket", "pink")} <b>${esc(launch.name)}</b> ($${esc(launch.ticker)}) is launching on pump.fun. Byte is preparing the transaction.</p></div>`,
+    launched: `<div class="card launch"><h4>Launch</h4><p>${icon("live", "ok")} <b>${esc(launch.name)}</b> is live: <a href="${esc(launch.url)}" target="_blank" rel="noopener">${esc(launch.url)}</a><br><span class="dim">The dev buy is sold once it is in profit, or after 3 minutes if nobody else buys; the crew also earns creator fees.</span></p></div>`,
+    simulated: `<div class="card launch"><h4>Launch</h4><p>${icon("flask", "sky")} Launch simulated (live launching is off). The coin exists on the whiteboard only.</p></div>`,
     failed: `<div class="card launch"><h4>Launch</h4><p>Launch failed: ${esc(launch.error || "unknown")}</p></div>`,
   }[launch.status] || "";
   const t = world.treasury || {};
@@ -357,14 +358,14 @@ function pollCard(world) {
     const t = poll.tally?.[i] || { votes: 0, weight: 0 };
     const win = poll.winner === i;
     return `<div class="vote-opt ${win ? "win" : ""} ${String(i) === mine ? "mine" : ""}">
-      <div class="vote-row"><span>${win ? "🏆 " : ""}${esc(o)}</span>${open ? `<button class="btn" data-vote="${i}" ${vote.busy ? "disabled" : ""}>${String(i) === mine ? "Voted ✓" : "Vote"}</button>` : `<span class="dim">${t.votes} votes</span>`}</div>
+      <div class="vote-row"><span>${win ? icon("trophy", "gold") : ""}${esc(o)}</span>${open ? `<button class="btn" data-vote="${i}" ${vote.busy ? "disabled" : ""}>${String(i) === mine ? `Voted ${icon("check")}` : "Vote"}</button>` : `<span class="dim">${t.votes} votes</span>`}</div>
       <div class="vote-bar"><i style="width:${Math.round((t.weight / total) * 100)}%"></i></div>
       <div class="dim">${t.votes} vote${t.votes === 1 ? "" : "s"} · weight ${t.weight}</div></div>`;
   }).join("");
   const wallet = vote.wallet
     ? `<span class="dim">Wallet ${short(vote.wallet)} connected</span>`
     : phantom() ? `<button class="btn primary" data-act="connect">Connect Phantom to vote</button>` : `<a class="btn" href="https://phantom.app/" target="_blank" rel="noopener">Install Phantom to vote</a>`;
-  return `<div class="card poll"><h4>🗳️ Holder vote · ${open ? `closes in ${mins} min` : "closed"} · ${poll.voters || 0} voters</h4>
+  return `<div class="card poll"><h4>${icon("ballot")} Holder vote · ${open ? `closes in ${mins} min` : "closed"} · ${poll.voters || 0} voters</h4>
     <p class="dim">${open ? "Which coin should the crew cook next? One signed vote per wallet; holders of the crew's coins count 3x (10x for 1M+ tokens). Signing is free and sends no transaction." : poll.winner != null ? "Holders picked the winner. The crew builds it." : "No votes, the crew decides."}</p>
     ${rows}
     ${open ? `<div class="vote-foot">${wallet}${vote.msg ? `<div class="dim">${esc(vote.msg)}</div>` : ""}</div>` : ""}</div>`;
@@ -415,13 +416,13 @@ export function renderLeaderboard(world) {
 
 function scalperCard(world) {
   const s = world.scalper;
-  if (!s) return `<div class="card"><h4>⚡ Scalper</h4><p class="empty">Warming up: first scan within a minute.</p></div>`;
+  if (!s) return `<div class="card"><h4>${icon("zap", "gold")} Scalper</h4><p class="empty">Warming up: first scan within a minute.</p></div>`;
   const d = s.stats || {}, a = s.allTime || {};
   const winRate = a.exits ? Math.round((a.wins / a.exits) * 100) : null;
   const ago = s.lastScanAt ? Math.max(0, Math.round(((net.world?.serverNow || Date.now()) - s.lastScanAt) / 1000)) : null;
   const watch = (s.candidates || []).slice(0, 5).map((c) => `<li><b>${esc(c.symbol)}</b> <span class="up">${signed(c.change5m, 1)}% 5m</span> <span class="dim">· ${c.setup === "migration" ? `migrated ${c.gradMin}m ago` : "breakout"} · buyers ${c.ratio}× · $${Math.round((c.vol5m || 0) / 1000)}k 5m vol</span></li>`).join("");
   const by = Object.entries(s.bySetup || {}).map(([k, v]) => `${k}: <b class="${v.realizedSol >= 0 ? "up" : "down"}">${signed(v.realizedSol, 4)}</b> (${v.wins}/${v.exits})`).join(" · ");
-  return `<div class="card scalper"><h4>⚡ Scalper · fresh pump.fun migrations, in and out fast</h4>
+  return `<div class="card scalper"><h4>${icon("zap", "gold")} Scalper · fresh pump.fun migrations, in and out fast</h4>
     <div class="stat-row">
       <div class="stat">Today<b>${d.entries || 0} in · ${d.exits || 0} out</b></div>
       <div class="stat">Today PnL<b class="${(d.realizedSol || 0) >= 0 ? "up" : "down"}">${signed(d.realizedSol || 0, 4)}</b></div>
@@ -437,7 +438,7 @@ function upgradesCard(world) {
   const owned = new Set(world.upgrades || []), m = world.upgradeMetrics || {};
   return `<div class="card"><h4>Office upgrades · ${owned.size}/${UPGRADES.length}</h4><ul class="upgrades">${UPGRADES.map((u) => {
     const have = owned.has(u.id), cur = Math.max(0, m[u.metric] || 0), pct = Math.min(100, Math.round((cur / u.target) * 100));
-    return `<li class="${have ? "have" : ""}"><span>${have ? "✅" : "🔒"}</span><div><b>${esc(u.name)}</b><div class="dim">${have ? esc(u.desc) : esc(u.label)}</div>${have ? "" : `<div class="vote-bar"><i style="width:${pct}%"></i></div>`}</div></li>`;
+    return `<li class="${have ? "have" : ""}"><span>${have ? icon("checkCircle", "ok") : icon("lock")}</span><div><b>${esc(u.name)}</b><div class="dim">${have ? esc(u.desc) : esc(u.label)}</div>${have ? "" : `<div class="vote-bar"><i style="width:${pct}%"></i></div>`}</div></li>`;
   }).join("")}</ul></div>`;
 }
 
@@ -450,7 +451,7 @@ function radarCard(sig) {
   if (!sig?.feed?.length) return "";
   const ago = (t) => { const m = Math.max(0, Math.round((Date.now() - (t || Date.now())) / 60_000)); return m < 60 ? `${m}m` : `${Math.round(m / 60)}h`; };
   const rows = sig.feed.slice(0, 8).map((i) => `<li><span class="score s${i.score >= 8 ? "hot" : i.score >= 6 ? "warm" : "cool"}">${i.score}</span> <span class="dim">${esc(i.author ? "@" + i.author : i.feed)} · ${ago(i.at)}</span><br>${i.url ? `<a href="${esc(i.url)}" target="_blank" rel="noopener">${esc(i.title.slice(0, 140))}</a>` : esc(i.title.slice(0, 140))}${i.angle ? `<br><span class="dim">→ ${esc(i.angle)}</span>` : ""}</li>`).join("");
-  return `<div class="card radar"><h4>📡 Juno's news radar${sig.hot ? " · 🔥 flash sprint queued" : ""}</h4>
+  return `<div class="card radar"><h4>${icon("radar", "sky")} Juno's news radar${sig.hot ? ` · ${icon("flame", "warn")} flash sprint queued` : ""}</h4>
     <p class="dim">Live world headlines, animal &amp; zoo stories, viral news, AI, tech and crypto${sig.x ? ", plus posts from big X accounts" : " and Trump's Truth Social posts"}, plus a story desk that digs up great older stories every 30 minutes, scored 0-10 for coin potential. 6+ triggers a flash launch.${sig.xError ? ` <span class="dim">X watcher: ${esc(sig.xError)}</span>` : ""}</p>
     <ul class="radar-list">${rows}</ul></div>`;
 }

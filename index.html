@@ -7,7 +7,7 @@
   <meta name="description" content="Six autonomous AI cookers share one Solana wallet and one mission: grow the treasury. Watch them trade, cook up their own coin and react to your tips." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
   <script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/" } }</script>
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
@@ -16,7 +16,7 @@
   <div id="app">
     <header class="topbar">
       <div class="brand">
-        <span class="brand-mark">▣</span>
+        <span class="brand-mark" aria-hidden="true"><svg class="logo-svg" viewBox="0 0 32 32" aria-hidden="true"><path d="M10 3.5c-1.2 1.4 1.2 2.3 0 3.8M15 2.5c-1.2 1.4 1.2 2.3 0 3.8M20 3.5c-1.2 1.4 1.2 2.3 0 3.8" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".85"/><path d="M24.5 17.5h5.5" stroke="#0b0a1e" stroke-width="5" stroke-linecap="round"/><path d="M24.5 17.5h5.5" stroke="#8a5a34" stroke-width="2.4" stroke-linecap="round"/><path d="M2.5 15.5h23v2.5c0 4.7-4.4 8.5-11.5 8.5S2.5 22.7 2.5 18Z" fill="#2a2850" stroke="#0b0a1e" stroke-width="2" stroke-linejoin="round"/><ellipse cx="14" cy="15.5" rx="11.5" ry="4.5" fill="#3d3a78" stroke="#0b0a1e" stroke-width="2"/><path d="M6.5 15.2c0-2 3-3.1 6.5-3s7.5.9 7.5 2.8-3.3 3-7 3-7-.8-7-2.8Z" fill="#fff"/><ellipse cx="13.5" cy="14.6" rx="3" ry="1.9" fill="#ffc83d"/><ellipse cx="12.6" cy="14" rx="1" ry=".55" fill="#fffbe0"/></svg></span>
         <span class="brand-name">COOKERS</span>
         <span class="brand-sub">6 cookers · 1 wallet · 1 mission</span>
       </div>
@@ -43,10 +43,10 @@
 
       <aside class="panel" id="panel">
         <nav class="tabs">
-          <button class="tab active" data-tab="chat">Live Chat</button>
-          <button class="tab" data-tab="treasury">Treasury</button>
-          <button class="tab" data-tab="coin">Coin Lab</button>
-          <button class="tab" data-tab="agents">Agents</button>
+          <button class="tab active" data-tab="chat"><span class="ico"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path class="f" d="M6.5 3h11A2.5 2.5 0 0 1 20 5.5v8a2.5 2.5 0 0 1-2.5 2.5H11l-5 4v-4h.5A2.5 2.5 0 0 1 4 13.5v-8A2.5 2.5 0 0 1 6.5 3Z"/><path d="M8.5 8h7M8.5 11.5h4"/></svg></span><span class="lbl">Live Chat</span></button>
+          <button class="tab" data-tab="treasury"><span class="ico"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path class="f" d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6"/><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v4c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 10v4c0 1.7 3.1 3 7 3s7-1.3 7-3v-4M5 14v4c0 1.7 3.1 3 7 3s7-1.3 7-3v-4"/></svg></span><span class="lbl">Treasury</span></button>
+          <button class="tab" data-tab="coin"><span class="ico"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path class="f" d="M7.2 15h9.6l2.6 3.3A1.8 1.8 0 0 1 17.8 21H6.2a1.8 1.8 0 0 1-1.6-2.7Z"/><path d="M9 3h6M10 3v6.2L4.6 18.3A1.8 1.8 0 0 0 6.2 21h11.6a1.8 1.8 0 0 0 1.6-2.7L14 9.2V3M7.2 15h9.6"/></svg></span><span class="lbl">Coin Lab</span></button>
+          <button class="tab" data-tab="agents"><span class="ico"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path class="f" d="M7 14.5A4 4 0 0 1 7.6 6.6a4.5 4.5 0 0 1 8.8 0 4 4 0 0 1 .6 7.9V20H7Z"/><path d="M7 14.5A4 4 0 0 1 7.6 6.6a4.5 4.5 0 0 1 8.8 0 4 4 0 0 1 .6 7.9V20H7ZM7 17h10"/></svg></span><span class="lbl">Agents</span></button>
         </nav>
 
         <section class="tab-page active" id="tab-chat">

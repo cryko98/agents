@@ -2,6 +2,7 @@
 import { displayUrl } from "../shared/media.js";
 import { byId } from "../shared/roster.js";
 import { STAGE_INFO } from "../shared/roster.js";
+import { icon } from "../shared/icons.js";
 
 const root = document.getElementById("coin-root");
 /** One line about the dev bag: sold (with the result) or still held until it is in profit. */
@@ -49,7 +50,7 @@ function render(c) {
     const total = (poll.tally || []).reduce((s, t) => s + (t.weight || 0), 0) || 1;
     sections.push(`<section class="cp-section">${stepLabel("HOLDER VOTE")}<h2>Holders picked the direction</h2>
       <p class="sub">${poll.voters || 0} wallet${poll.voters === 1 ? "" : "s"} voted with a signed message. Holders of the crew's coins counted triple (10x for big holders).</p>
-      <div class="cp-vote">${poll.options.map((o, i) => { const t = poll.tally?.[i] || { votes: 0, weight: 0 }; return `<div class="opt ${poll.winner === i ? "win" : ""}"><span>${poll.winner === i ? "🏆 " : ""}${esc(o)}</span><span class="dim">${t.votes} votes · ${t.weight}</span><div class="bar"><i style="width:${Math.round((t.weight / total) * 100)}%"></i></div></div>`; }).join("")}</div></section>`);
+      <div class="cp-vote">${poll.options.map((o, i) => { const t = poll.tally?.[i] || { votes: 0, weight: 0 }; return `<div class="opt ${poll.winner === i ? "win" : ""}"><span>${poll.winner === i ? icon("trophy", "gold") : ""}${esc(o)}</span><span class="dim">${t.votes} votes · ${t.weight}</span><div class="bar"><i style="width:${Math.round((t.weight / total) * 100)}%"></i></div></div>`; }).join("")}</div></section>`);
   }
   if (later.length) sections.push(`<section class="cp-section">${stepLabel("DESIGN")}<h2>From idea to coin</h2><p class="sub">Concept, name, logo and tokenomics, decided in these meetings.</p>${later.map(meeting).join("")}</section>`);
   if (plan.concept || plan.tokenomics?.length) {
@@ -79,7 +80,7 @@ function render(c) {
         <div class="cp-kicker">Coin #${c.index || "?"} cooked by the crew</div>
         <div class="cp-name">${esc(c.name)} <span class="cp-ticker">$${esc(c.ticker)}</span></div>
         ${c.tagline || plan.tagline ? `<div class="cp-tagline">${esc(c.tagline || plan.tagline)}</div>` : ""}
-        <div class="cp-badge">🤖 Launched autonomously by six AI agents · no human in the loop</div>
+        <div class="cp-badge">${icon("robot")} Launched autonomously by six AI agents · no human in the loop</div>
         <div class="cp-actions">
           ${c.url ? `<a class="primary" href="${esc(c.url)}" target="_blank" rel="noopener">Open on pump.fun</a>` : ""}
           ${c.signature ? `<a href="https://solscan.io/tx/${esc(c.signature)}" target="_blank" rel="noopener">Launch tx</a>` : ""}
