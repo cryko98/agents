@@ -479,8 +479,8 @@ function sourceCard(src) {
 
 function radarCard(sig) {
   if (!sig?.feed?.length) return "";
-  const ago = (t) => { const m = Math.max(0, Math.round((Date.now() - (t || Date.now())) / 60_000)); return m < 60 ? `${m}m` : `${Math.round(m / 60)}h`; };
-  const rows = sig.feed.slice(0, 8).map((i) => `<li><span class="score s${i.score >= 8 ? "hot" : i.score >= 6 ? "warm" : "cool"}">${i.score}</span> <span class="dim">${esc(i.author ? "@" + i.author : i.feed)} · ${ago(i.at)}</span><br>${i.url ? `<a href="${esc(i.url)}" target="_blank" rel="noopener">${esc(i.title.slice(0, 140))}</a>` : esc(i.title.slice(0, 140))}${i.angle ? `<br><span class="dim">→ ${esc(i.angle)}</span>` : ""}</li>`).join("");
+  const ago = (t) => { if (!t) return "undated"; const m = Math.max(0, Math.round((Date.now() - t) / 60_000)); return m < 60 ? `${m}m` : m < 2880 ? `${Math.round(m / 60)}h` : `${Math.round(m / 1440)}d`; };
+  const rows = sig.feed.slice(0, 8).map((i) => `<li><span class="score s${i.score >= 8 ? "hot" : i.score >= 6 ? "warm" : "cool"}">${i.score}</span> <span class="dim">${esc(i.author ? "@" + i.author : i.feed)} · ${ago(i.at)}${i.radarOnly ? " · old story, not trending" : ""}</span><br>${i.url ? `<a href="${esc(i.url)}" target="_blank" rel="noopener">${esc(i.title.slice(0, 140))}</a>` : esc(i.title.slice(0, 140))}${i.angle ? `<br><span class="dim">→ ${esc(i.angle)}</span>` : ""}</li>`).join("");
   return `<div class="card radar"><h4>${icon("radar", "sky")} Juno's news radar${sig.hot ? ` · ${icon("flame", "warn")} flash sprint queued` : ""}</h4>
     <p class="dim">Live world headlines, animal &amp; zoo stories, viral news, AI, tech and crypto${sig.x ? ", plus posts from big X accounts" : " and Trump's Truth Social posts"}, plus a story desk that digs up great older stories every 30 minutes, scored 0-10 for coin potential. 6+ triggers a flash launch.${sig.xError ? ` <span class="dim">X watcher: ${esc(sig.xError)}</span>` : ""}</p>
     <ul class="radar-list">${rows}</ul></div>`;
