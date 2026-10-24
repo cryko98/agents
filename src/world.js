@@ -184,7 +184,7 @@ export const SPOTS = {
 export const CHAT_SPOTS = [
   { name: "the coffee machine", spots: [{ c: 14, r: 1, facing: "se" }, { c: 15, r: 1, facing: "nw" }] },
   { name: "the lounge couch", spots: [{ c: 9, r: 1, facing: "sw", sit: true }, { c: 10, r: 1, facing: "sw", sit: true }] },
-  { name: "the pool table", spots: [{ c: 2, r: 11, facing: "ne" }, { c: 3, r: 9, facing: "sw" }] },
+  { name: "the air hockey table", spots: [{ c: 2, r: 11, facing: "ne" }, { c: 3, r: 9, facing: "sw" }] },
   { name: "the hallway", spots: [{ c: 11, r: 5, facing: "se" }, { c: 12, r: 5, facing: "nw" }] },
   { name: "the arcade", spots: [{ c: 1, r: 9, facing: "nw" }, { c: 1, r: 10, facing: "ne" }] },
   { name: "the kitchen table", spots: [{ c: 14, r: 3, facing: "se", sit: true }, { c: 16, r: 3, facing: "nw", sit: true }] },

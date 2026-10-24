@@ -1,4 +1,4 @@
-import { Renderer } from "./renderer.js";
+import { Renderer } from "./renderer3d.js";
 import { Sim } from "./sim.js";
 import { net, onWorld, startPolling, serverNow } from "./net.js";
 import { initUI, syncTranscript, updateBubbles, updateRoster, updateStatus, renderTreasury, renderCoin, updateTicker, updateScreenLogo, renderLeaderboard } from "./ui.js";

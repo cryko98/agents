@@ -1,6 +1,6 @@
 // DOM side: chat log, speech bubbles, roster, agent cards, profile modal, treasury, coin lab, status.
+import { displayUrl } from "../shared/media.js";
 import { AGENTS, byId, STAGES, STAGE_INFO } from "../shared/roster.js";
-import { portraitDataURL } from "./sprites.js";
 import { net, sendTip, requestPerk } from "./net.js";
 import { UPGRADES } from "../shared/upgrades.js";
 import { voteMessage } from "../shared/poll.js";
@@ -16,7 +16,7 @@ let simRef = null;
 
 export function initUI({ sim, renderer, canvas }) {
   simRef = sim;
-  for (const a of AGENTS) portraits[a.id] = portraitDataURL(a.look);
+  for (const a of AGENTS) portraits[a.id] = `/assets/portraits/${a.id}.png`;
 
   for (const btn of document.querySelectorAll(".tab")) {
     btn.addEventListener("click", () => {
@@ -293,7 +293,7 @@ export function renderCoin(world) {
   const plan = world.plan, launch = world.launch || { status: "none" };
   const idx = Math.max(0, STAGES.indexOf(plan.stage));
   const stages = STAGES.map((s, i) => `<div class="st ${i < idx ? "done" : i === idx ? "now" : ""}" title="${STAGE_INFO[s].label}"></div>`).join("");
-  const logo = plan.logoUrl ? `<img src="${esc(plan.logoUrl)}" alt="logo">` : `<span class="ph">${esc((plan.ticker || "??").slice(0, 2))}</span>`;
+  const logo = plan.logoUrl ? `<img src="${esc(displayUrl(plan.logoUrl))}" alt="logo">` : `<span class="ph">${esc((plan.ticker || "??").slice(0, 2))}</span>`;
   const list = (arr) => arr?.length ? `<ul>${arr.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>` : `<p class="empty">Not decided yet.</p>`;
   const launchCard = {
     none: "", proposed: `<div class="card launch"><h4>Launch</h4><p>🚀 The crew wants to launch <b>${esc(launch.name)}</b> ($${esc(launch.ticker)}) on pump.fun. Waiting for the owner's approval.</p></div>`,
@@ -305,7 +305,7 @@ export function renderCoin(world) {
   const t = world.treasury || {};
   const launched = (world.launches || []).filter((l) => l.status === "launched");
   const launchedCard = launched.length ? `<div class="card launch"><h4>Launched by the crew · ${launched.length} coin${launched.length > 1 ? "s" : ""}</h4>
-    <ul class="launched">${launched.map((l) => `<li>${l.logoUrl ? `<img src="${esc(l.logoUrl)}" alt="">` : ""}<div><b>${esc(l.name)}</b> <span class="coin-ticker">$${esc(l.ticker)}</span><br><a href="/coin/${encodeURIComponent(l.ticker)}">birth record</a> · <a href="${esc(l.url)}" target="_blank" rel="noopener">pump.fun</a> · <span class="dim">${new Date(l.launchedAt).toLocaleDateString()}</span></div></li>`).join("")}</ul>
+    <ul class="launched">${launched.map((l) => `<li>${l.logoUrl ? `<img src="${esc(displayUrl(l.logoUrl))}" alt="">` : ""}<div><b>${esc(l.name)}</b> <span class="coin-ticker">$${esc(l.ticker)}</span><br><a href="/coin/${encodeURIComponent(l.ticker)}">birth record</a> · <a href="${esc(l.url)}" target="_blank" rel="noopener">pump.fun</a> · <span class="dim">${new Date(l.launchedAt).toLocaleDateString()}</span></div></li>`).join("")}</ul>
     <p class="dim">Creator fees collected: <b>${(t.creatorFeesSol || 0).toFixed(4)} SOL</b>${t.pendingCreatorFeesSol ? ` · pending ${t.pendingCreatorFeesSol.toFixed(4)} SOL` : ""} · checked every 10 min. Launched autonomously; dev buys sold in profit, or after 3 min with no buyers.</p></div>` : "";
   root.innerHTML = `
     ${launchedCard}
@@ -466,5 +466,5 @@ export function updateScreenLogo(renderer, url) {
   img.dataset.src = url;
   img.onload = () => { renderer.logoImage = img; };
   img.onerror = () => { renderer.logoImage = null; };
-  img.src = url;
+  img.src = displayUrl(url);
 }

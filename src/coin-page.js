@@ -1,6 +1,6 @@
 // /coin/:ticker - the birth record of a coin: research, holder vote, meetings, launch.
+import { displayUrl } from "../shared/media.js";
 import { byId } from "../shared/roster.js";
-import { portraitDataURL } from "./sprites.js";
 import { STAGE_INFO } from "../shared/roster.js";
 
 const root = document.getElementById("coin-root");
@@ -16,8 +16,7 @@ function devSellText(ds) {
 }
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const portraits = {};
-const portrait = (id) => (portraits[id] ||= byId[id] ? portraitDataURL(byId[id].look) : "");
+const portrait = (id) => (byId[id] ? `/assets/portraits/${id}.png` : "");
 const date = (t) => (t ? new Date(t).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }) : "—");
 
 const ticker = decodeURIComponent(location.pathname.split("/").filter(Boolean)[1] || "").toUpperCase();
@@ -75,7 +74,7 @@ function render(c) {
 
   return `
     <section class="cp-hero">
-      ${c.logoUrl ? `<img src="${esc(c.logoUrl)}" alt="${esc(c.name)} logo">` : `<div></div>`}
+      ${c.logoUrl ? `<img src="${esc(displayUrl(c.logoUrl))}" alt="${esc(c.name)} logo">` : `<div></div>`}
       <div>
         <div class="cp-kicker">Coin #${c.index || "?"} cooked by the crew</div>
         <div class="cp-name">${esc(c.name)} <span class="cp-ticker">$${esc(c.ticker)}</span></div>
