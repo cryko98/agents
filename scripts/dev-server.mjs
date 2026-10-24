@@ -21,9 +21,14 @@ for (const name of [".env", ".env.local"]) {
 // --memory: an isolated local world (no Redis, no wallet key, no launches), safe while production runs.
 // --token=<mint>: pretend the project token is live, to try the holder chat.
 if (process.argv.includes("--memory")) {
+  // keep the public address (shop and tips show it), drop the key
+  if (!process.env.AGENT_WALLET_PUBLIC) process.env.AGENT_WALLET_PUBLIC = (await import("../lib/wallet.js")).publicAddress() || "";
   for (const k of ["KV_REST_API_URL", "KV_REST_API_TOKEN", "UPSTASH_REDIS_REST_URL", "UPSTASH_REDIS_REST_TOKEN", "AGENT_WALLET_SECRET", "LAUNCH_ENABLED", "PINATA_JWT"]) delete process.env[k];
   process.env.SESSION_SECRET ||= "local-dev-only";
 }
+// --wallet=<address>: the crew wallet to show (public address only)
+const walletArg = process.argv.find((a) => a.startsWith("--wallet="));
+if (walletArg) process.env.AGENT_WALLET_PUBLIC = walletArg.slice(9);
 const tokenArg = process.argv.find((a) => a.startsWith("--token="));
 if (tokenArg) process.env.PROJECT_TOKEN_MINT = tokenArg.slice(8);
 

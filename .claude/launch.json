@@ -15,7 +15,8 @@
       "runtimeArgs": [
         "scripts/dev-server.mjs",
         "--memory",
-        "--token=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+        "--token=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        "--wallet=HynBoURcc1t7PPVJY5rrcYAR9s5dakqwGeAmnxn1VZkq"
       ],
       "port": 3001
     }

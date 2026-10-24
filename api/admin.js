@@ -13,6 +13,17 @@ export default async function handler(req, res) {
   const body = await readBody(req);
   const action = String(body.action || "");
   if (action === "tick") return json(res, 200, await runTick({ force: true }));
+  if (action === "billboard-remove") {
+    // takes the current ad (or the booked one with body.id) off the garden billboard
+    const { removeBillboardAd } = await import("../lib/shop.js");
+    if (!(await acquireLock(LOCK_KEY, 30))) return json(res, 409, { error: "busy, try again" });
+    try {
+      const world = await getJSON(WORLD_KEY);
+      const ok = removeBillboardAd(world, body.id ? String(body.id) : null);
+      if (ok) await setJSON(WORLD_KEY, world);
+      return json(res, 200, { ok });
+    } finally { await releaseLock(LOCK_KEY); }
+  }
   if (action === "test-logo") {
     // renders one logo with the configured logo model (costs one image) to check the model + key
     const { generateLogo, logoPrompt, LOGO_MODEL, REALISTIC_MODEL } = await import("../lib/logo.js");

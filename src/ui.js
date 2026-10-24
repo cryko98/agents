@@ -6,6 +6,7 @@ import { UPGRADES } from "../shared/upgrades.js";
 import { voteMessage } from "../shared/poll.js";
 import { icon } from "../shared/icons.js";
 import { initSupport, backingCard } from "./support.js";
+import { openBillboard, initShop } from "./shop.js";
 
 const $ = (sel) => document.querySelector(sel);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
@@ -27,8 +28,9 @@ export function initUI({ sim, renderer, canvas }) {
     });
   }
 
-  // holder chat, tips and backing asks
+  // holder chat, tips and backing asks; the party shop and the garden billboard
   initSupport();
+  initShop();
 
   // roster + cards
   const roster = $("#roster"), grid = $("#agent-grid");
@@ -57,9 +59,10 @@ export function initUI({ sim, renderer, canvas }) {
     if (renderer.focus) return owner && owner !== renderer.focus ? renderer.focusMonitor(owner) : owner ? null : renderer.unfocus();
     const a = renderer.agentAt(x, y, sim.agents);
     if (a) return openProfile(a.id);
-    if (owner) renderer.focusMonitor(owner);
+    if (owner) return renderer.focusMonitor(owner);
+    if (renderer.billboardAt?.(x, y)) openBillboard();
   });
-  canvas.addEventListener("mousemove", (ev) => { const { x, y } = toCanvas(ev); canvas.classList.toggle("hover", !!renderer.agentAt(x, y, sim.agents) || !!renderer.monitorAt?.(x, y)); });
+  canvas.addEventListener("mousemove", (ev) => { const { x, y } = toCanvas(ev); canvas.classList.toggle("hover", !!renderer.agentAt(x, y, sim.agents) || !!renderer.monitorAt?.(x, y) || !!renderer.billboardAt?.(x, y)); });
 
   $("#profile-modal").addEventListener("click", (ev) => { if (ev.target.dataset.close !== undefined || ev.target.classList.contains("close")) closeProfile(); });
   document.addEventListener("keydown", (ev) => { if (ev.key === "Escape") { closeProfile(); renderer.unfocus?.(); } });
@@ -114,7 +117,7 @@ const LEAD_ICON = {
   "📈": ["chartUp", "ok"], "📉": ["chartDown", "bad"], "🖼": ["image", "pink"], "📸": ["image", "pink"], "🎨": ["image", "pink"],
   "🗑": ["trash"], "🚀": ["rocket", "pink"], "🧪": ["flask", "sky"], "🔒": ["lock", "gold"], "💸": ["coins", "gold"], "💰": ["coins", "gold"],
   "🗳": ["ballot", "sky"], "🔎": ["search", "sky"], "⚡": ["zap", "gold"], "📡": ["radar", "sky"], "🛠": ["wrench", "gold"], "🛡": ["shield", "warn"],
-  "🛑": ["stop", "bad"], "🤝": ["coins", "gold"], "✅": ["checkCircle", "ok"], "🔁": ["refresh"], "🔄": ["refresh"], "💛": ["heart", "gold"], "🤖": ["robot"], "🟢": ["live", "ok"],
+  "🛑": ["stop", "bad"], "🤝": ["coins", "gold"], "🎉": ["party", "pink"], "📣": ["megaphone", "gold"], "✅": ["checkCircle", "ok"], "🔁": ["refresh"], "🔄": ["refresh"], "💛": ["heart", "gold"], "🤖": ["robot"], "🟢": ["live", "ok"],
 };
 const LEAD_RE = /^\s*(\p{Extended_Pictographic})️?\s*/u;
 function leadIcon(text = "") {

@@ -8,6 +8,8 @@ import { COLS, ROWS } from "./config.js";
 import { ROOMS, roomAt, FURNITURE, WALL_ITEMS, isDoor } from "./world.js";
 import { drawScreen, SCREEN_W, SCREEN_H } from "./screens.js";
 import { icon } from "../shared/icons.js";
+import { Effects } from "./effects3d.js";
+import { drawBillboard, BOARD_W, BOARD_H } from "./billboard.js";
 
 const ASSETS = "/assets/kenney/";
 const CHARACTERS = { nova: "female-e", byte: "male-a", pixel: "female-b", max: "male-d", sage: "male-e", juno: "female-c" };
@@ -28,6 +30,8 @@ const VIEWS = {
   meeting: { label: "Meeting", icon: "users", ...roomBox("meeting", 1.04) },
   game: { label: "Game Room", icon: "gamepad", ...roomBox("game") },
 };
+// the rentable billboard in the garden's front-east corner, facing the camera
+const BILLBOARD = { x: 18.0, z: 13.2, yaw: Math.PI / 4, w: 3.5, h: 1.75, y: 0.9 };
 const SCREEN_RES = 2, FOCUS_RES = 5; // desk screens render at 2x the logical size, 5x when the camera is on them
 const ISO_DIR = new THREE.Vector3(1, 1.05, 1).normalize(); // the isometric camera looks along -ISO_DIR
 // the Mini Characters "sit" clip sits on the ground: lift them to the seat of what they sit on
@@ -50,13 +54,13 @@ const NATURE = ["tree_oak", "tree_default", "tree_fat", "tree_detailed", "tree_p
   "flower_redA", "flower_yellowB", "flower_purpleA", "grass_large", "grass", "rock_smallA", "rock_smallFlatB", "mushroom_redGroup", "path_stone"];
 // garden: [model, x, z, scale, turn]; the empty corner east of the meeting room is a small terrace
 const GARDEN = [
-  ["tree_oak", 0.6, 14.3, 2.6, 0.4], ["tree_fat", 19.0, 13.9, 2.4, 1.2], ["tree_default", 19.2, 2.0, 2.3, 2.0], ["tree_pineTallA_detailed", -0.5, -0.4, 2.6, 0],
-  ["tree_detailed", 17.2, 9.6, 2.2, 0.8], ["tree_pineRoundC", 18.9, 6.4, 2.2, 0], ["plant_bushLarge", 16.6, 6.6, 1.9, 0.3], ["plant_bushDetailed", 17.6, 12.4, 1.8, 1.1],
+  ["tree_oak", 0.6, 14.3, 2.6, 0.4], ["tree_fat", 19.4, 10.4, 2.0, 1.2], ["tree_default", 19.2, 2.0, 2.3, 2.0], ["tree_pineTallA_detailed", -0.5, -0.4, 2.6, 0],
+  ["tree_detailed", 17.2, 9.6, 2.2, 0.8], ["tree_pineRoundC", 18.9, 6.4, 2.2, 0], ["plant_bushLarge", 16.6, 6.6, 1.9, 0.3], ["plant_bushDetailed", 16.6, 12.7, 1.6, 1.1],
   ["plant_bush", 3.2, 14.2, 1.8, 0], ["plant_bushLarge", 10.6, 14.5, 1.8, 2.2], ["plant_bush", 15.7, 14.3, 1.7, 0.6], ["plant_bushDetailed", 19.2, 4.6, 1.7, 0],
   ["flower_redA", 4.6, 14.0, 2.0, 0], ["flower_yellowB", 9.2, 14.2, 2.0, 0.5], ["flower_purpleA", 12.4, 14.1, 2.0, 1], ["flower_redA", 16.9, 8.1, 2.0, 0],
   ["flower_yellowB", 19.0, 9.2, 2.0, 0], ["flower_purpleA", 17.0, 11.0, 2.0, 2], ["flower_yellowB", 1.8, 14.6, 2.0, 1.4], ["flower_purpleA", 18.9, 0.6, 2.0, 0.3],
   ["grass_large", 13.8, 14.6, 2.2, 0], ["grass_large", 18.4, 11.2, 2.2, 1], ["grass", 5.6, 14.6, 2.2, 0], ["grass", 19.3, 7.8, 2.2, 0.4], ["grass_large", 2.3, 14.1, 2.0, 0.7],
-  ["rock_smallA", 8.3, 14.6, 2.0, 0.2], ["rock_smallFlatB", 17.3, 13.4, 2.4, 0.9], ["mushroom_redGroup", 0.2, 13.4, 2.0, 0.5], ["rock_smallA", 19.4, 12.5, 1.8, 2.1],
+  ["rock_smallA", 8.3, 14.6, 2.0, 0.2], ["rock_smallFlatB", 16.4, 14.4, 2.2, 0.9], ["mushroom_redGroup", 0.2, 13.4, 2.0, 0.5], ["flower_redA", 19.3, 14.4, 1.8, 2.1],
 ];
 // a stone path from the hallway's south end off the island
 const PATH = [[6.6, 13.3], [7.3, 13.75], [6.7, 14.2], [7.3, 14.65]];
@@ -303,6 +307,7 @@ export class Renderer {
     await document.fonts?.ready; // neon signs and the meeting screen are drawn with the page font
     this.chars = chars;
     this.buildGarden();
+    this.buildBillboard();
     this.buildHouse();
     this.buildFurniture();
     this.ready = true;
@@ -598,7 +603,7 @@ export class Renderer {
     const clip = (name) => gltf.animations.find((c) => c.name === name);
     const actions = {};
     // "drive" is a seated pose with both hands forward: at a desk it reads as typing
-    for (const [key, name] of Object.entries({ idle: "idle", walk: "walk", sit: "sit", type: "drive", talk: "emote-yes", gesture: "interact-right" })) {
+    for (const [key, name] of Object.entries({ idle: "idle", walk: "walk", sit: "sit", type: "drive", talk: "emote-yes", gesture: "interact-right", jump: "jump", hold: "holding-right" })) {
       const c = clip(name);
       if (c) actions[key] = mixer.clipAction(c);
     }
@@ -645,7 +650,11 @@ export class Renderer {
     v.model.rotation.y = v.yaw;
 
     const walking = a.path.length > 0;
+    const hop = this.effects3d?.hopFor(a.id, this.serverNow || Date.now());
+    const fxAnim = hop != null ? "jump" : this.showAnim(a, walking, t);
+    if (hop != null) v.model.position.y = y + Math.sin(hop * Math.PI) * 0.55;
     if (walking) { this.play(v, "walk"); v.actions.walk.timeScale = 1.35; }
+    else if (fxAnim) this.play(v, fxAnim);
     else if (a.sitting) this.play(v, this.atOwnDesk(a) && v.actions.type ? "type" : "sit");
     else if (a.talking) {
       // talking while standing: nod, with an occasional hand gesture
@@ -659,6 +668,69 @@ export class Renderer {
     v.glow.material.opacity = a.talking ? 0.35 : 0.16;
   }
 
+  /** Paid interactions change how the people in them move: dancing at the disco, a cup in hand at the coffee round. */
+  showAnim(a, walking, t) {
+    const sc = this.world?.scene, now = this.serverNow || Date.now();
+    if (walking || !sc || sc.type !== "show" || !sc.participants.includes(a.id) || now < sc.startsAt - 10_000 || now > sc.endsAt) return null;
+    if (sc.show === "disco") return Math.floor(t * 1.2 + a.id.charCodeAt(0)) % 3 === 0 ? "jump" : "talk";
+    if (sc.show === "coffee" && !a.sitting && !a.talking) return "hold";
+    return null;
+  }
+
+  // ---------- garden billboard ----------
+  buildBillboard() {
+    const b = BILLBOARD, g = new THREE.Group();
+    const dark = new THREE.MeshStandardMaterial({ color: 0x23214a, roughness: 0.6, metalness: 0.2 });
+    const trim = new THREE.MeshStandardMaterial({ color: 0xffcf5c, roughness: 0.4, metalness: 0.3 });
+    for (const dx of [-b.w * 0.32, b.w * 0.32]) {
+      const post = new THREE.Mesh(new THREE.BoxGeometry(0.12, b.y + 0.4, 0.12), dark);
+      post.position.set(dx, (b.y + 0.4) / 2 - 0.32, -0.08); post.castShadow = true; g.add(post);
+    }
+    const back = new THREE.Mesh(new THREE.BoxGeometry(b.w + 0.16, b.h + 0.16, 0.1), dark);
+    back.position.set(0, b.y + b.h / 2, -0.05); back.castShadow = true; g.add(back);
+    for (const [w, h, x, y] of [[b.w + 0.2, 0.05, 0, b.y + b.h + 0.08], [b.w + 0.2, 0.05, 0, b.y - 0.08], [0.05, b.h + 0.2, -b.w / 2 - 0.08, b.y + b.h / 2], [0.05, b.h + 0.2, b.w / 2 + 0.08, b.y + b.h / 2]]) {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.12), trim); m.position.set(x, y, 0); g.add(m);
+    }
+    const cv = document.createElement("canvas"); cv.width = BOARD_W; cv.height = BOARD_H;
+    const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
+    const face = new THREE.Mesh(new THREE.PlaneGeometry(b.w, b.h), new THREE.MeshBasicMaterial({ map: tex }));
+    face.position.set(0, b.y + b.h / 2, 0.005);
+    g.add(face);
+    // two little lamps on top
+    for (const dx of [-b.w * 0.3, b.w * 0.3]) {
+      const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.06, 0.16), dark); lamp.position.set(dx, b.y + b.h + 0.16, 0.12); g.add(lamp);
+    }
+    g.position.set(b.x, 0, b.z); g.rotation.y = b.yaw;
+    this.scene.add(g);
+    this.board = { face, tex, ctx: cv.getContext("2d"), key: null };
+    this.drawBoard();
+  }
+
+  /** Show an ad (or the rent offer when ad is null). */
+  setBillboard(ad, price) {
+    if (!this.board) { this.pendingAd = [ad, price]; return; }
+    const key = ad ? `${ad.id}` : `empty:${price}`;
+    if (key === this.board.key) return;
+    this.board.key = key; this.board.ad = ad; this.board.price = price;
+    this.drawBoard();
+  }
+
+  drawBoard() {
+    const bd = this.board;
+    if (!bd) return;
+    if (this.pendingAd) { [bd.ad, bd.price] = this.pendingAd; this.pendingAd = null; }
+    drawBillboard(bd.ctx, bd.ad || null, { price: bd.price, onImage: () => this.drawBoard() });
+    bd.tex.needsUpdate = true;
+  }
+
+  billboardAt(x, y) {
+    if (!this.board) return false;
+    this.raycaster ||= new THREE.Raycaster();
+    const ndc = new THREE.Vector2((x / this.canvas.width) * 2 - 1, -(y / this.canvas.height) * 2 + 1);
+    this.raycaster.setFromCamera(ndc, this.camera);
+    return this.raycaster.intersectObject(this.board.face, false).length > 0;
+  }
+
   // ---------- per frame ----------
   render(agents, time) {
     const t = time / 1000;
@@ -670,6 +742,10 @@ export class Renderer {
       if (this.logoImage !== this.shownLogo) this.updateScreen();
       for (const a of agents) this.updateAgent(a, dt, t);
       this.followGathering(agents, t);
+      this.effects3d ||= new Effects(this.scene);
+      const now = this.serverNow || Date.now();
+      this.effects3d.sync(this.world?.effects, now);
+      this.effects3d.update(t, now, (id) => this.agentViews.get(id)?.root.position);
       this.updateScreens(agents, t);
       this.animateDecor(t);
       this.easeCamera(dt);

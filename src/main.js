@@ -2,6 +2,8 @@ import { Renderer } from "./renderer3d.js";
 import { Sim } from "./sim.js";
 import { net, onWorld, startPolling, serverNow } from "./net.js";
 import { renderSupport } from "./support.js";
+import { renderShop } from "./shop.js";
+import { BILLBOARD_PLANS } from "../shared/shop.js";
 import { initUI, syncTranscript, updateBubbles, updateRoster, updateStatus, renderTreasury, renderCoin, updateTicker, updateScreenLogo, renderLeaderboard } from "./ui.js";
 
 const canvas = document.getElementById("scene");
@@ -15,7 +17,8 @@ sim.onLine = (line) => syncTranscript([{ id: line.id, kind: "line", speaker: lin
 let lastPlanKey = null, lastTreasuryKey = null, lastBoardKey = null;
 onWorld((world) => {
   sim.applyWorld(world);
-  renderer.world = world; // desk monitors draw from it
+  renderer.world = world; // desk monitors draw from it (and the interaction effects)
+  renderer.setBillboard(world.billboard?.current || null, BILLBOARD_PLANS[0].price);
   syncTranscript(world.transcript);
   renderer.upgrades = new Set(world.upgrades || []);
   // the vote countdown changes every minute, so the coin lab re-renders then too
@@ -28,6 +31,7 @@ onWorld((world) => {
   if (boardKey !== lastBoardKey) { lastBoardKey = boardKey; renderLeaderboard(world); }
   updateTicker(world);
   renderSupport(world);
+  renderShop(world);
 });
 
 startPolling(4000);
@@ -38,6 +42,7 @@ function frame(now) {
   const dt = Math.min(0.1, (now - last) / 1000);
   last = now;
   sim.update(dt, serverNow());
+  renderer.serverNow = serverNow();
   renderer.render(sim.agents, now);
   updateBubbles(sim, renderer, canvas);
   if (now - uiTick > 500) { uiTick = now; updateRoster(sim); updateStatus(); }

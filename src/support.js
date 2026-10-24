@@ -29,7 +29,7 @@ export function offerSummary(ask) {
 
 function timeLeft(ms) {
   if (ms <= 0) return "closing";
-  const h = Math.floor(ms / 3_600_000), m = Math.round((ms % 3_600_000) / 60_000);
+  const t = Math.round(ms / 60_000), h = Math.floor(t / 60), m = t % 60;
   return h ? `${h}h ${m}m left` : `${m} min left`;
 }
 
@@ -64,7 +64,7 @@ export function closeSheet() { sheet = null; $("#sheet-modal").hidden = true; }
 function renderComposer() {
   const input = $("#tip-input"), send = $("#tip-form button"), help = $("#tip-help");
   const t = token(), h = currentHolder(), sym = `$${t.symbol}`;
-  const tip = `<button type="button" class="linkbtn" data-act="tip">${icon("coins", "gold")} Tip SOL</button>`;
+  const tip = `<span class="help-btns"><button type="button" class="linkbtn" data-act="shop">${icon("party", "pink")} Party shop</button><button type="button" class="linkbtn" data-act="tip">${icon("coins", "gold")} Tip SOL</button></span>`;
   let state, line;
   if (!t.mint) { state = false; input.placeholder = `Holder chat opens when ${sym} launches`; line = `${icon("lock")} Only ${sym} holders can message the crew.`; }
   else if (!h) { state = false; input.placeholder = `Connect a wallet holding ${sym} to chat`; line = `<button type="button" class="linkbtn" data-act="connect">${icon("lock")} Connect wallet</button> <span>Only ${sym} holders can message the crew.</span>`; }
