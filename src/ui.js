@@ -301,7 +301,7 @@ export function renderTreasury(world) {
       <li>Small caps: $15k–$1M market cap, extra safety checks below $100k</li>
       <li>Automatic stop-loss at −30%, take half off at +60%</li>
       <li>Only tokens with real liquidity, at least 3h old, mint &amp; freeze revoked</li>
-      <li>Every launch: a dev buy of up to 0.2 SOL (sized to what the wallet can spare), sold once it is in profit, or after 3 minutes if nobody else buys; plus creator fees</li>
+      <li>Every launch: a dev buy of up to 0.2 SOL (sized to what the wallet can spare); in profit it is held while buyers keep coming and sold when buying slows or the price pulls back; sold after 3 minutes if nobody else buys; plus creator fees</li>
       <li>Coins launch only from stories on Juno's radar (fresh news or great older stories); the logo is the story's real photo or a picture Pixel generates for it</li>
     </ul></div>
     <div class="disclaimer">Nothing here is financial advice. Paper mode uses virtual SOL. The agents can be wrong, and often are.</div>`;
@@ -326,7 +326,7 @@ export function renderCoin(world) {
   const launchCard = {
     none: "", proposed: `<div class="card launch"><h4>Launch</h4><p>${icon("rocket", "pink")} The crew wants to launch <b>${esc(launch.name)}</b> ($${esc(launch.ticker)}) on pump.fun. Waiting for the owner's approval.</p></div>`,
     approved: `<div class="card launch"><h4>Launch</h4><p>${icon("rocket", "pink")} <b>${esc(launch.name)}</b> ($${esc(launch.ticker)}) is launching on pump.fun. Byte is preparing the transaction.</p></div>`,
-    launched: `<div class="card launch"><h4>Launch</h4><p>${icon("live", "ok")} <b>${esc(launch.name)}</b> is live: <a href="${esc(launch.url)}" target="_blank" rel="noopener">${esc(launch.url)}</a><br><span class="dim">The dev buy is sold once it is in profit, or after 3 minutes if nobody else buys; the crew also earns creator fees.</span></p></div>`,
+    launched: `<div class="card launch"><h4>Launch</h4><p>${icon("live", "ok")} <b>${esc(launch.name)}</b> is live: <a href="${esc(launch.url)}" target="_blank" rel="noopener">${esc(launch.url)}</a><br><span class="dim">In profit the dev buy is held while buyers keep coming and sold when the buying slows; with no buyers it is sold after 3 minutes; the crew also earns creator fees.</span></p></div>`,
     simulated: `<div class="card launch"><h4>Launch</h4><p>${icon("flask", "sky")} Launch simulated (live launching is off). The coin exists on the whiteboard only.</p></div>`,
     failed: `<div class="card launch"><h4>Launch</h4><p>Launch failed: ${esc(launch.error || "unknown")}</p></div>`,
   }[launch.status] || "";
@@ -358,7 +358,7 @@ export function renderCoin(world) {
     ${reviewCard(plan, world.launchMinScore)}
     <div class="card"><h4>Roadmap</h4>${list(plan.roadmap)}</div>
     ${plan.notes ? `<div class="card"><h4>Notes</h4><p>${esc(plan.notes)}</p></div>` : ""}
-    <div class="disclaimer">The plan is written by the cookers and launches on pump.fun when it is ready. Each launch has a dev buy that the crew sells once it is in profit, or after 3 minutes if nobody else buys; it also earns creator fees. Coins inspired by public posts are not affiliated with or endorsed by their authors.</div>`;
+    <div class="disclaimer">The plan is written by the cookers and launches on pump.fun when it is ready. Each launch has a dev buy that the crew holds while buyers keep coming once it is in profit and sells when the buying slows, or after 3 minutes if nobody else buys; it also earns creator fees. Coins inspired by public posts are not affiliated with or endorsed by their authors.</div>`;
 }
 
 /** Sage's launch review of the current plan: the score per criterion and the verdict. */

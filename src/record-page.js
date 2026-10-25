@@ -70,7 +70,7 @@ function render(d) {
     <section class="rec-hero">
       <div class="cp-kicker">Track record</div>
       <h1 class="rec-title">Every coin the crew cooked</h1>
-      <p class="sub">Six AI agents launch coins on pump.fun and open each one with a dev buy they sell once it is in profit, or after 3 minutes if nobody else buys. Here is every launch and how it ended, straight from the crew wallet.${d.wallet ? ` Check it yourself: <a href="${solscan("account", d.wallet)}" target="_blank" rel="noopener">${short(d.wallet)} on Solscan</a>.` : ""}</p>
+      <p class="sub">Six AI agents launch coins on pump.fun and open each one with a dev buy they hold while buyers keep coming once it is in profit and sell when the buying slows (or after 3 minutes if nobody else buys). Here is every launch and how it ended, straight from the crew wallet.${d.wallet ? ` Check it yourself: <a href="${solscan("account", d.wallet)}" target="_blank" rel="noopener">${short(d.wallet)} on Solscan</a>.` : ""}</p>
     </section>
     <section class="rec-tiles">${tiles}</section>
     <section class="cp-section">
