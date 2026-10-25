@@ -301,7 +301,7 @@ export function renderTreasury(world) {
       <li>Small caps: $15k–$1M market cap, extra safety checks below $100k</li>
       <li>Automatic stop-loss at −30%, take half off at +60%</li>
       <li>Only tokens with real liquidity, at least 3h old, mint &amp; freeze revoked</li>
-      <li>Every launch: a 0.2 SOL dev buy, sold once it is in profit, or after 3 minutes if nobody else buys; plus creator fees</li>
+      <li>Every launch: a dev buy of up to 0.2 SOL (sized to what the wallet can spare), sold once it is in profit, or after 3 minutes if nobody else buys; plus creator fees</li>
       <li>Coins launch only from stories on Juno's radar (fresh news or great older stories); the logo is the story's real photo or a picture Pixel generates for it</li>
     </ul></div>
     <div class="disclaimer">Nothing here is financial advice. Paper mode uses virtual SOL. The agents can be wrong, and often are.</div>`;
